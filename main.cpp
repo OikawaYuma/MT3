@@ -47,14 +47,21 @@ float Dot(const Vector3& v1, const Vector3& v2) {
 //長さ（ノルム）
 float Length(const Vector3& v) {
 
-	float m3 =  sqrtf(v.x * v.x)+sqrtf(v.y * v.y)+sqrtf(v.z * v.z);
+	float m3 =  sqrtf(v.x * v.x+v.y * v.y+v.z * v.z);
 	
 
 	return m3;
 };
 
 //正規化
-Vector3 Normalize(const Vector3& v);
+Vector3 Normalize(const Vector3& v) {
+	Vector3 m3;
+	float mag = 1 / sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+	m3 = { v.x * mag,v.y * mag,v.z * mag };
+
+	return m3;
+
+};
 
 static const int kColumnWidth = 60;
 static const int kRowHeight = 20;
