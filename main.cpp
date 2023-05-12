@@ -19,6 +19,15 @@ Vector3 Multiply(float scalar, const Vector3& v) {
 	return m3;
 };
 
+// 1. 透視投影行列
+Matrix4x4 MakePerspactiveForMartrix(float fovY, float aspectratio, float nearClip, float farClip);
+
+// 2. 正射影行列
+Matrix4x4 MakeOrthographicMatrix(float left,float top,float right,float bottom,float nearClip,float farClip);
+
+// 3. ビューポート変換行列
+Matrix4x4 MakeViewpo
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
