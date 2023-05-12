@@ -6,7 +6,9 @@ const char kWindowTitle[] = "LE2B_05_オイカワユウマ";
 struct Vector3 {
 	float x, y, z;
 };
-
+struct Matrix4x4 {
+	float m[4][4];
+};
 
 Vector3 Multiply(float scalar, const Vector3& v) {
 	Vector3 m3;
