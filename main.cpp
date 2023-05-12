@@ -1,5 +1,5 @@
 #include <Novice.h>
-#include<math.h>
+#include<cmath>
 
 const char kWindowTitle[] = "LE2B_05_オイカワユウマ";
 
@@ -21,7 +21,17 @@ Vector3 Multiply(float scalar, const Vector3& v) {
 
 // 1. 透視投影行列
 Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectratio, float nearClip, float farClip) {
+	Matrix4x4 m4;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			m4.m[i][j] = 0;
+		}
+	}
+	m4.m[0][0] =1/fovY*1/tan()
+	m4.m[2][3] = 1;
 
+
+	return m4;
 };
 
 //// 2. 正射影行列
