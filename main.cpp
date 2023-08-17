@@ -4,12 +4,11 @@
 #define _USE_MATH_DEFINES
 #include<cassert>
 #include <Vector2.h>
+#include <Vector3.h>
 #include<imGui.h>
 const char kWindowTitle[] = "LE2B_05_オイカワユウマ";
 
-struct Vector3 {
-	float x, y, z;
-};
+
 struct Matrix4x4 {
 	float m[4][4];
 };
@@ -17,6 +16,15 @@ struct Matrix4x4 {
 struct Sphere {
 	Vector3 center; //!< 中心点
 	float radius; //!< 半径
+};
+
+struct Line {
+	Vector3 origin;
+	Vector3 diff;
+};
+
+struct Ray {
+
 };
 
 /*------------------------------------------------------------------
