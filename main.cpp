@@ -24,7 +24,13 @@ struct Line {
 };
 
 struct Ray {
+	Vector3 origin;
+	Vector3 diff;
+};
 
+struct Segment {
+	Vector3 origin;
+	Vector3 diff;
 };
 
 /*------------------------------------------------------------------
@@ -452,6 +458,17 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 	}
 }
 
+/*-----------------------------------
+            02_00
+---------------------------------------*/
+Vector3 Project(const Vector3& v1, const Vector3& v2) {
+
+}
+
+Vector3 ClosestPoint(const Vector3& point ,const Segment& segment) {
+
+}
+
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -484,6 +501,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	Sphere sphere = { { 0,0,0 } ,0.5};
+
+	/*------------------------------------
+	              02_02
+	----------------------------------------*/
+
+	Segment segment{ {-2.0f,-1.0f,0.0f},{3.0f,2.0f,2.0f} };
+	Vector3 point{ -1.5f,0.6f,0.6f };
+
+	Vector3 project = Project(SubtractRect())
 
 	//float pi = 3.1415f;
 
