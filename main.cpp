@@ -199,6 +199,15 @@ Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Ve
 	return m4;
 };
 
+//減算
+Vector3 Subtract(const Vector3& v1, const Vector3& v2) {
+	Vector3 m3;
+	m3.x = v1.x - v2.x;
+	m3.y = v1.y - v2.y;
+	m3.z = v1.z - v2.z;
+	return m3;
+};
+
 // 1. X軸回転行列
 Matrix4x4 MakeRotateXMatrix(float radian) {
 	Matrix4x4 m4;
@@ -509,7 +518,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Segment segment{ {-2.0f,-1.0f,0.0f},{3.0f,2.0f,2.0f} };
 	Vector3 point{ -1.5f,0.6f,0.6f };
 
-	Vector3 project = Project(SubtractRect())
+	Vector3 project = Project(Subtract(point, segment.origin), segment.diff);
+	Vector3 closestPoint = ClosestPoint(point, segment);
+
+	Sphere pointSphere{ point,0.01f };
+	Sphere closestPointSphere{ closestPoint,0.01f };
+
+	Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
+	Vector3 end = Transform(Transform(Add(segment.origin,segment.diff) worldViewProjectionMatrix), viewportMatrix);
 
 	//float pi = 3.1415f;
 
@@ -584,6 +600,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		DrawSphere(sphere,worldViewProjectionMatrix,viewportMatrix,BLACK);
+		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
+		DrawSphere(closestPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		Novice::DrawTriangle(
 			int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
