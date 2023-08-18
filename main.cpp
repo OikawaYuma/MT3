@@ -40,6 +40,10 @@ struct Plane {
 	int color;
 };
 
+struct Triangle {
+	Vector3 vertices[3];//!< 頂点
+};
+
 
 /*------------------------------------------------------------------
 						   MT3_01_00使用
@@ -617,6 +621,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	plane.color = WHITE;
 
 	bool f = false;
+
+	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
