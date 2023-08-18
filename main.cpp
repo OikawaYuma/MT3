@@ -483,16 +483,25 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 		}
 	}
 }
+//正規化
+Vector3 Normalize(const Vector3& v) {
+	Vector3 m3;
+	float mag = 1 / sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+	m3 = { v.x * mag,v.y * mag,v.z * mag };
 
+	return m3;
+
+};
 /*-----------------------------------
             02_00
 ---------------------------------------*/
 Vector3 Project(const Vector3& v1, const Vector3& v2) {
-	float m3 = Dot(v1, v2);
+	float m3 = Dot(v1, Normalize(v2));
 	Vector3 result;
-	result.x = (m3 / (v2.x *v2.x)) * v2.x;
-	result.y = (m3 / (v2.y *v2.y)) * v2.y;
-	result.z = (m3 / (v2.z *v2.z)) * v2.z;
+	Vector3 demo = Normalize(v2);
+	result.x = m3 * demo.x;
+	result.y = m3 * demo.y;
+	result.z = m3 * demo.z;
 	return result;
 }
 
@@ -503,6 +512,7 @@ Vector3 ClosestPoint(const Vector3& point ,const Segment& segment) {
 	cp.z = point.z + segment.origin.z;
 	return cp;
 }
+
 
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -545,7 +555,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector3 point{ -1.5f,0.6f,0.6f };
 
 	Vector3 project = Project(Subtract(point, segment.origin), segment.diff);
-	Vector3 closestPoint = ClosestPoint(point, segment);
+	Vector3 closestPoint = ClosestPoint(project, segment);
 
 	Sphere pointSphere{ point,0.01f };
 	Sphere closestPointSphere{ closestPoint,0.01f };
