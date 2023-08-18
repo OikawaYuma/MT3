@@ -1,9 +1,10 @@
 #include <Novice.h>
-#include<cmath>
-#include<math.h>
+#include <cmath>
+#include <math.h>
 #define _USE_MATH_DEFINES
-#include<cassert>
+#include <cassert>
 #include <Vector2.h>
+#include <stdlib.h>
 #include <Vector3.h>
 #include<imGui.h>
 const char kWindowTitle[] = "LE2B_05_オイカワユウマ";
@@ -528,11 +529,13 @@ float Length(const Vector3& v) {
 
 	return m3;
 };
-bool IsCollision(const Sphere& s1, const Sphere& s2) {
+bool IsCollision(const Sphere& s1, const Plane& s2) {
 	bool g = false;
+	//Vector3 q = { s1.center.x - s2.normal.x * s2.distance,s1.center.y - s2.normal.y * s2.distance, s1.center.z - s2.normal.z * s2.distance, };
+	//float d = Dot(s2.normal, q);
 	// 2つの弾の中心点間の距離を求める
-	float distance = Length({s2.center.x - s1.center.x,s2.center.y - s1.center.y,s2.center.z - s1.center.z });
-	if (distance <= s1.radius + s2.radius) {
+	float distance = fabsf(Dot( s2.normal,s1.center) - s2.distance);
+	if (distance <= s1.radius) {
 		g = true;
 	}
 	else { g = false; }
@@ -563,7 +566,7 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 	}
 	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[2].x, (int)points[2].y, color);
 	Novice::DrawLine((int)points[2].x, (int)points[2].y, (int)points[1].x, (int)points[1].y, color);
-	Novice::DrawLine((int)points[3].x, (int)points[3].y, (int)points[1].x, (int)points[1].y, color);
+	Novice::DrawLine((int)points[1].x, (int)points[1].y, (int)points[3].x, (int)points[3].y, color);
 	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[3].x, (int)points[3].y, color);
 
 
@@ -613,7 +616,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	plane.distance = 5;
 	plane.color = WHITE;
 
-	
+	bool f = false;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -670,11 +673,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("Sphere", &sphere.center.x, 0.01f);
 		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
 		ImGui::DragFloat3("Plane", &plane.normal.x, 0.01f);
-		plane.normal = Normalize(plane.normal);
+		
 
 	
 		ImGui::End();
 
+		plane.normal = Normalize(plane.normal);
+		f = IsCollision(sphere, plane);
+		if (f == true) {
+			sphere.color = RED;
+		}
+		else { sphere.color = WHITE; }
 		///
 		/// ↑更新処理ここまで
 		///
