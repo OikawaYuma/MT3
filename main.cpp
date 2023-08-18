@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <Vector3.h>
 #include<imGui.h>
+
+#include<algorithm>
 const char kWindowTitle[] = "LE2B_05_オイカワユウマ";
 
 
@@ -582,13 +584,23 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 		color, kFillModeWireFrame);
 }
 
-bool IsCollision(const AABB& aabb1, const AABB& aabb2) {
+bool IsCollision(const AABB& aabb, const Sphere& sphere) {
 	bool g = false;
-	if (
-		(aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x) &&
-		(aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y) && 
-		(aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z))
-	{
+
+	// 最近接点を求める
+	Vector3 closestPoint{ 
+		std::clamp(sphere.center.x,aabb.min.x,aabb.max.x),
+		std::clamp(sphere.center.y,aabb.min.y,aabb.max.y),
+		std::clamp(sphere.center.z,aabb.min.z,aabb.max.z)
+	};
+
+	// 最近接点と弾の中心との距離を求める
+	float distance = Length({
+		closestPoint.x - sphere.center.x,
+		closestPoint.y - sphere.center.y,
+		closestPoint.z - sphere.center.z });
+	// 距離が半径よりも小さければ衝突
+	if(distance<= sphere.radius){
 		g = true;
 	}
 	else { g = false; }
@@ -773,7 +785,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::End();
 
 		plane.normal = Normalize(plane.normal);
-		f = IsCollision(aabb1, aabb2);
+		f = IsCollision(aabb1, sphere);
 		if (f == true) {
 			aabb1.color = RED;
 		}
@@ -786,10 +798,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1.color);
-		DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, WHITE);
-		/*Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
-		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, WHITE);
-		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, sphere.color);*/
+		//DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
+		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, sphere.color);
 		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, plane.color);
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
