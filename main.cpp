@@ -533,18 +533,7 @@ float Length(const Vector3& v) {
 
 	return m3;
 };
-bool IsCollision(const Sphere& s1, const Plane& s2) {
-	bool g = false;
-	//Vector3 q = { s1.center.x - s2.normal.x * s2.distance,s1.center.y - s2.normal.y * s2.distance, s1.center.z - s2.normal.z * s2.distance, };
-	//float d = Dot(s2.normal, q);
-	// 2つの弾の中心点間の距離を求める
-	float distance = fabsf(Dot( s2.normal,s1.center) - s2.distance);
-	if (distance <= s1.radius) {
-		g = true;
-	}
-	else { g = false; }
-	return g;
-}
+
 
 Vector3 Parpendicular(const Vector3& vector) {
 	if (vector.x != 0.0f || vector.y != 0.0f) {
@@ -576,6 +565,29 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 
 
 }
+void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	Triangle t;
+
+	t.vertices[0] = Transform(Transform(triangle.vertices[0], viewProjectionMatrix), viewportMatrix);
+	t.vertices[1] = Transform(Transform(triangle.vertices[1], viewProjectionMatrix), viewportMatrix);
+	t.vertices[2] = Transform(Transform(triangle.vertices[2], viewProjectionMatrix), viewportMatrix);
+
+	Novice::DrawTriangle((int)t.vertices[0].x, (int)t.vertices[0].y, (int)t.vertices[1].x, (int)t.vertices[1].y, (int)t.vertices[2].x, (int)t.vertices[2].y,
+		color, kFillModeWireFrame);
+}
+
+//bool IsCollision(const Triangle& triangle, const Segment& segment) {
+//	bool g = false;
+//	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
+//	Vector3 cross01 = Cross(v01, v1p);
+//	Vector3 cross12 = Cross(v12, v2p);
+//	Vector3 cross20 = Cross(v20, v0p);
+//	if(Dot(cross01,triangle.)){
+//		g = true;
+//	}
+//	else { g = false; }
+//	return g;
+//}
 
 
 
@@ -622,7 +634,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	bool f = false;
 
-	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
+	Segment segment{ {-1.5f,0.0f,-0.5f},{-1.5f,1.0f,1.5f} };
+
+	Triangle triangle;
+	triangle.vertices[0] = {
+		0,1,0
+	};
+	triangle.vertices[1] = {
+	-1,0,0
+	};
+	triangle.vertices[2] = {
+	1,0,0
+	};
+
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -670,7 +694,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			screenVertices[i] = Transform(ndcVertex, viewportMatrix);
 		}
 
-		
+		Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
+		Vector3 end = Transform(Transform(Add(segment.origin, segment.diff), worldViewProjectionMatrix), viewportMatrix);
+
 		
 
 		ImGui::Begin("Window");
@@ -679,13 +705,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("Sphere", &sphere.center.x, 0.01f);
 		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
 		ImGui::DragFloat3("Plane", &plane.normal.x, 0.01f);
+
+		ImGui::DragFloat3("Line", &segment.origin.x, 0.01f);
 		
 
 	
 		ImGui::End();
 
 		plane.normal = Normalize(plane.normal);
-		f = IsCollision(sphere, plane);
+		//f = IsCollision(sphere, plane);
 		if (f == true) {
 			sphere.color = RED;
 		}
@@ -697,7 +725,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-
+		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
+		DrawTriangle(triangle,worldViewProjectionMatrix,viewportMatrix,WHITE);
 		DrawSphere(sphere,worldViewProjectionMatrix,viewportMatrix, sphere.color);
 		DrawPlane(plane,worldViewProjectionMatrix,viewportMatrix,plane.color);
 		
