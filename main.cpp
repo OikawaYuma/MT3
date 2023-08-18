@@ -33,6 +33,7 @@ struct Ray {
 struct Segment {
 	Vector3 origin;
 	Vector3 diff;
+	int color;
 };
 struct Plane {
 	Vector3 normal; // !< 法線
@@ -561,10 +562,8 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 	Novice::DrawLine((int)points[2].x, (int)points[2].y, (int)points[1].x, (int)points[1].y, color);
 	Novice::DrawLine((int)points[1].x, (int)points[1].y, (int)points[3].x, (int)points[3].y, color);
 	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[3].x, (int)points[3].y, color);
-
-
-
 }
+
 void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
 	Triangle t;
 
@@ -576,18 +575,22 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 		color, kFillModeWireFrame);
 }
 
-//bool IsCollision(const Triangle& triangle, const Segment& segment) {
-//	bool g = false;
-//	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
-//	Vector3 cross01 = Cross(v01, v1p);
-//	Vector3 cross12 = Cross(v12, v2p);
-//	Vector3 cross20 = Cross(v20, v0p);
-//	if(Dot(cross01,triangle.)){
-//		g = true;
-//	}
-//	else { g = false; }
-//	return g;
-//}
+bool IsCollision(const Triangle& triangle, const Segment& segment) {
+	bool g = false;
+	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
+	Vector3 cross01 = Cross(v01, v1p);
+	Vector3 cross12 = Cross(v12, v2p);
+	Vector3 cross20 = Cross(v20, v0p);
+	if(
+		Dot(cross01, triangle. ) >= 0.0f&&
+		Dot(cross01, triangle. ) >= 0.0f&&
+		Dot(cross01, triangle. ) >= 0.0f)
+	{
+		g = true;
+	}
+	else { g = false; }
+	return g;
+}
 
 
 
@@ -646,6 +649,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	triangle.vertices[2] = {
 	1,0,0
 	};
+
+	segment.color = WHITE;
 
 
 	// ウィンドウの×ボタンが押されるまでループ
@@ -713,9 +718,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::End();
 
 		plane.normal = Normalize(plane.normal);
-		/*f = IsCollision(triangle, segment);*/
+		f = IsCollision(triangle, segment);
 		if (f == true) {
-			sphere.color = RED;
+			segment.color = RED;
 		}
 		else { sphere.color = WHITE; }
 		///
@@ -725,9 +730,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
+		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), segment.color);
 		DrawTriangle(triangle,worldViewProjectionMatrix,viewportMatrix,WHITE);
-		DrawSphere(sphere,worldViewProjectionMatrix,viewportMatrix, sphere.color);
+		//DrawSphere(sphere,worldViewProjectionMatrix,viewportMatrix, sphere.color);
 		DrawPlane(plane,worldViewProjectionMatrix,viewportMatrix,plane.color);
 		
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
