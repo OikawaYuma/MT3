@@ -33,6 +33,7 @@ struct Ray {
 struct Segment {
 	Vector3 origin;
 	Vector3 diff;
+	int color;
 };
 struct Plane {
 	Vector3 normal; // !< 法線
@@ -529,18 +530,32 @@ float Length(const Vector3& v) {
 
 	return m3;
 };
-//bool IsCollision(const Segment& segment, const Plane& plane) {
-//	bool g = false;
-//	//Vector3 q = { s1.center.x - s2.normal.x * s2.distance,s1.center.y - s2.normal.y * s2.distance, s1.center.z - s2.normal.z * s2.distance, };
-//	//float d = Dot(s2.normal, q);
-//	// 2つの弾の中心点間の距離を求める
-//	float distance = fabsf(Dot( s2.normal,s1.center) - s2.distance);
-//	if (distance <= s1.radius) {
-//		g = true;
-//	}
-//	else { g = false; }
-//	return g;
-//}
+bool IsCollision(const Segment& line, const Plane& plane) {
+	bool g = false;
+	
+
+	// まず数直判定を行うために、法線と線のない席を求める
+	float dot = Dot(line.diff,plane.normal );
+
+	// 垂直=平行であるので、衝突しているはずがない
+	if (dot == 0.0f) {
+		return false;
+	}
+
+	// tを求める
+	float t = (plane.distance - Dot(line.origin, plane.normal)) / dot;
+	
+	ImGui::Begin("t");
+	ImGui::Text("%f", t);
+	ImGui::End();
+
+
+	if (t >= 0&&t<=1) {
+		g = true;
+	}
+	else { g = false; }
+	return g;
+}
 
 Vector3 Parpendicular(const Vector3& vector) {
 	if (vector.x != 0.0f || vector.y != 0.0f) {
@@ -616,6 +631,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	plane.distance = 1;
 	plane.color = WHITE;
 
+	Segment segment{ {-1.0f,-1.0f,-1.0f},{1.0f,1.0f,1.0f} };
+	segment.color = WHITE;
+
 	bool f = false;
 
 	// ウィンドウの×ボタンが押されるまでループ
@@ -663,6 +681,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Vector3 ndcVertex = Transform(kLocalkVertices[i], worldViewProjectionMatrix);
 			screenVertices[i] = Transform(ndcVertex, viewportMatrix);
 		}
+		Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
+		Vector3 end = Transform(Transform(Add(segment.origin, segment.diff), worldViewProjectionMatrix), viewportMatrix);
+		
+
+		f = IsCollision(segment, plane);
+
 
 		
 		
@@ -674,17 +698,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
 		ImGui::DragFloat3("Plane", &plane.normal.x, 0.01f);
 		ImGui::DragFloat("PlaneD", &plane.distance, 0.01f);
+
+		ImGui::DragFloat3("Segment", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("Segment", &segment.diff.x, 0.01f);
 		
 
 	
 		ImGui::End();
 
 		plane.normal = Normalize(plane.normal);
-		//f = IsCollision(sphere, plane);
+		
 		if (f == true) {
-			sphere.color = RED;
+			segment.color = RED;
 		}
-		else { sphere.color = WHITE; }
+		else { segment.color = WHITE; }
 		///
 		/// ↑更新処理ここまで
 		///
@@ -692,6 +719,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
+		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), segment.color);
+
 
 		DrawSphere(sphere,worldViewProjectionMatrix,viewportMatrix, sphere.color);
 		DrawPlane(plane,worldViewProjectionMatrix,viewportMatrix,plane.color);
