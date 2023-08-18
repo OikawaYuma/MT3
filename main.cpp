@@ -216,6 +216,15 @@ Vector3 Subtract(const Vector3& v1, const Vector3& v2) {
 	return m3;
 };
 
+//内績
+float Dot(const Vector3& v1, const Vector3& v2) {
+	float m3;
+	m3 = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+
+
+	return m3;
+};
+
 // 1. X軸回転行列
 Matrix4x4 MakeRotateXMatrix(float radian) {
 	Matrix4x4 m4;
@@ -479,11 +488,20 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
             02_00
 ---------------------------------------*/
 Vector3 Project(const Vector3& v1, const Vector3& v2) {
-
+	float m3 = Dot(v1, v2);
+	Vector3 result;
+	result.x = (m3 / (v2.x *v2.x)) * v2.x;
+	result.y = (m3 / (v2.y *v2.y)) * v2.y;
+	result.z = (m3 / (v2.z *v2.z)) * v2.z;
+	return result;
 }
 
 Vector3 ClosestPoint(const Vector3& point ,const Segment& segment) {
-
+	Vector3 cp;
+	cp.x = point.x + segment.origin.x;
+	cp.y = point.y + segment.origin.y;
+	cp.z = point.z + segment.origin.z;
+	return cp;
 }
 
 
@@ -603,6 +621,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
 		ImGui::DragFloat3("Sphere", &sphere.center.x, 0.01f);
 		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
+
+		ImGui::SliderFloat3("crosspoint", &closestPointSphere.center.x, 0, 1.0f);
 		ImGui::End();
 
 		///
