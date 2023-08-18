@@ -16,6 +16,7 @@ struct Matrix4x4 {
 struct Sphere {
 	Vector3 center; //!< 中心点
 	float radius; //!< 半径
+	int color;
 };
 
 struct Line {
@@ -513,7 +514,24 @@ Vector3 ClosestPoint(const Vector3& point ,const Segment& segment) {
 	return cp;
 }
 
+//長さ（ノルム）
+float Length(const Vector3& v) {
 
+	float m3 = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+
+
+	return m3;
+};
+bool IsCollision(const Sphere& s1, const Sphere& s2) {
+	bool g = false;
+	// 2つの弾の中心点間の距離を求める
+	float distance = Length({s2.center.x - s1.center.x,s2.center.y - s1.center.y,s2.center.z - s1.center.z });
+	if (distance <= s1.radius + s2.radius) {
+		g = true;
+	}
+	else { g = false; }
+	return g;
+}
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -546,16 +564,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	Sphere sphere = { { 0,0,0 } ,0.5};
+	Sphere sphere2 = { { 1,0,1 } ,0.5 };
 
-	/*------------------------------------
-	              02_02
-	----------------------------------------*/
-
-	Segment segment{ {-2.0f,-1.0f,0.0f},{3.0f,2.0f,2.0f} };
-	Vector3 point{ -1.5f,0.6f,0.6f };
-
+	sphere.color = WHITE;
 	
-
+	bool f = false;
 	
 	//float pi = 3.1415f;
 
@@ -614,20 +627,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			screenVertices[i] = Transform(ndcVertex, viewportMatrix);
 		}
 
+		
+		f = IsCollision(sphere, sphere2);
 
-		Vector3 project = Project(Subtract(point, segment.origin), segment.diff);
-		Vector3 closestPoint = ClosestPoint(project, segment);
-
-		Sphere pointSphere{ point,0.01f };
-		Sphere closestPointSphere{ closestPoint,0.01f };
-
-
-
-		Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
-		Vector3 end = Transform(Transform(Add(segment.origin, segment.diff), worldViewProjectionMatrix), viewportMatrix);
-
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
-
+		if (f == true) {
+			sphere.color = RED;
+		}
+		else { sphere.color = WHITE; }
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
@@ -635,7 +641,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("Sphere", &sphere.center.x, 0.01f);
 		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
 
-		ImGui::DragFloat3("point", &point.x, 0.01f);
+	
 		ImGui::End();
 
 		///
@@ -646,9 +652,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 
-		DrawSphere(sphere,worldViewProjectionMatrix,viewportMatrix,BLACK);
-		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
-		DrawSphere(closestPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		DrawSphere(sphere,worldViewProjectionMatrix,viewportMatrix, sphere.color);
+		DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		Novice::DrawTriangle(
 			int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
