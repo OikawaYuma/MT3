@@ -554,11 +554,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Segment segment{ {-2.0f,-1.0f,0.0f},{3.0f,2.0f,2.0f} };
 	Vector3 point{ -1.5f,0.6f,0.6f };
 
-	Vector3 project = Project(Subtract(point, segment.origin), segment.diff);
-	Vector3 closestPoint = ClosestPoint(project, segment);
-
-	Sphere pointSphere{ point,0.01f };
-	Sphere closestPointSphere{ closestPoint,0.01f };
+	
 
 	
 	//float pi = 3.1415f;
@@ -619,6 +615,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 
 
+		Vector3 project = Project(Subtract(point, segment.origin), segment.diff);
+		Vector3 closestPoint = ClosestPoint(project, segment);
+
+		Sphere pointSphere{ point,0.01f };
+		Sphere closestPointSphere{ closestPoint,0.01f };
+
+
 
 		Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
 		Vector3 end = Transform(Transform(Add(segment.origin, segment.diff), worldViewProjectionMatrix), viewportMatrix);
@@ -632,7 +635,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("Sphere", &sphere.center.x, 0.01f);
 		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
 
-		ImGui::SliderFloat3("crosspoint", &closestPointSphere.center.x, 0, 1.0f);
+		ImGui::DragFloat3("point", &point.x, 0.01f);
 		ImGui::End();
 
 		///
