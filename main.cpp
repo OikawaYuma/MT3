@@ -576,18 +576,18 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 		color, kFillModeWireFrame);
 }
 
-bool IsCollision(const Triangle& triangle, const Segment& segment) {
-	bool g = false;
-	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
-	Vector3 cross01 = Cross(v01, v1p);
-	Vector3 cross12 = Cross(v12, v2p);
-	Vector3 cross20 = Cross(v20, v0p);
-	if(Dot(cross01,triangle.)){
-		g = true;
-	}
-	else { g = false; }
-	return g;
-}
+//bool IsCollision(const Triangle& triangle, const Segment& segment) {
+//	bool g = false;
+//	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
+//	Vector3 cross01 = Cross(v01, v1p);
+//	Vector3 cross12 = Cross(v12, v2p);
+//	Vector3 cross20 = Cross(v20, v0p);
+//	if(Dot(cross01,triangle.)){
+//		g = true;
+//	}
+//	else { g = false; }
+//	return g;
+//}
 
 
 
@@ -713,7 +713,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::End();
 
 		plane.normal = Normalize(plane.normal);
-		f = IsCollision(triangle, segment);
+		/*f = IsCollision(triangle, segment);*/
 		if (f == true) {
 			sphere.color = RED;
 		}
