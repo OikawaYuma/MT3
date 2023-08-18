@@ -33,6 +33,12 @@ struct Segment {
 	Vector3 origin;
 	Vector3 diff;
 };
+struct Plane {
+	Vector3 normal; // !< 法線
+	float distance; //!< 距離
+	int color;
+};
+
 
 /*------------------------------------------------------------------
 						   MT3_01_00使用
@@ -533,6 +539,39 @@ bool IsCollision(const Sphere& s1, const Sphere& s2) {
 	return g;
 }
 
+Vector3 Parpendicular(const Vector3& vector) {
+	if (vector.x != 0.0f || vector.y != 0.0f) {
+		return { -vector.y,vector.x,0.0f };
+
+	}
+	return { 0.0f,-vector.z,vector.y };
+}
+
+void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	Vector3 center = Multiply(plane.distance, plane.normal);
+	Vector3 perpendiculars[4];
+	perpendiculars[0] = Normalize(Parpendicular(plane.normal)); // 2
+	perpendiculars[1] = { -perpendiculars[0].x, -perpendiculars[0].y, -perpendiculars[0].z };// 3
+	perpendiculars[2] = Cross(plane.normal, perpendiculars[0]); // 4
+	perpendiculars[3] = { -perpendiculars[2].x, -perpendiculars[2].y, -perpendiculars[2].z }; // 5
+	// 6
+	Vector3 points[4];
+	for (int32_t index = 0; index < 4; ++index) {
+		Vector3 extend = Multiply(2.0f, perpendiculars[index]);
+		Vector3 point = Add(center, extend);
+		points[index] = Transform(Transform(point, viewProjectionMatrix), viewportMatrix);
+	}
+	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[2].x, (int)points[2].y, color);
+	Novice::DrawLine((int)points[2].x, (int)points[2].y, (int)points[1].x, (int)points[1].y, color);
+	Novice::DrawLine((int)points[3].x, (int)points[3].y, (int)points[1].x, (int)points[1].y, color);
+	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[3].x, (int)points[3].y, color);
+
+
+
+}
+
+
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -564,22 +603,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	Sphere sphere = { { 0,0,0 } ,0.5};
-	Sphere sphere2 = { { 1,0,1 } ,0.5 };
+	
 
 	sphere.color = WHITE;
 	
-	bool f = false;
 	
-	//float pi = 3.1415f;
+	Plane plane;
+	plane.normal = { 5,1,5 };
+	plane.distance = 5;
+	plane.color = WHITE;
 
-	//Matrix4x4 orthographicMatrix =
-	//	MakeOrthographicMatrix(-160.0f,160.0f,200.0f,300.0f,0.0f,1000.0f);
-
-	//Matrix4x4 perspectiveFovmatrix =
-	//	MakePerspectiveFovMatrix(0.63f,1.33f,0.1f,1000.0f);
-
-	//Matrix4x4 viewportMatrix =
-	//	MakeViewportMatrix(100.f, 200.0f, 600.0f, 300.0f, 0.0f, 1.0f);
+	
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -628,18 +662,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 
 		
-		f = IsCollision(sphere, sphere2);
-
-		if (f == true) {
-			sphere.color = RED;
-		}
-		else { sphere.color = WHITE; }
+		
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
 		ImGui::DragFloat3("Sphere", &sphere.center.x, 0.01f);
 		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
+		ImGui::DragFloat3("Plane", &plane.normal.x, 0.01f);
+		plane.normal = Normalize(plane.normal);
 
 	
 		ImGui::End();
@@ -653,7 +684,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		DrawSphere(sphere,worldViewProjectionMatrix,viewportMatrix, sphere.color);
-		DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		DrawPlane(plane,worldViewProjectionMatrix,viewportMatrix,plane.color);
 		
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		Novice::DrawTriangle(
