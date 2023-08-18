@@ -43,6 +43,8 @@ struct Plane {
 
 struct Triangle {
 	Vector3 vertices[3];//!< 頂点
+	int color;
+	int color2;
 };
 
 
@@ -455,7 +457,7 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 	const float kLonEvery = pi * 2.0f / (float)kSubdivision;  // 軽度分割1つ分の角度
 	const float kLatEvery = pi / (float)kSubdivision;  // 緯度分割1つ分の角度
 
-	
+
 	// 緯度の方向に分割 -π/2 ~ π/2
 	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
 		float lat = -pi / 2.0f + kLatEvery * latIndex;// 現在の緯度
@@ -467,19 +469,19 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 			const float latD = pi / kSubdivision;
 			const float lonD = 2 * pi / kSubdivision;
 			a = {
-				(cos(lat) * cos(lon))*sphere.radius +sphere.center.x,
-				(sin(lat))* sphere.radius + sphere.center.y,
-				(cos(lat) * sin(lon))* sphere.radius + sphere.center.z };
+				(cos(lat) * cos(lon)) * sphere.radius + sphere.center.x,
+				(sin(lat)) * sphere.radius + sphere.center.y,
+				(cos(lat) * sin(lon)) * sphere.radius + sphere.center.z };
 
-			b = { 
-				(cos(lat + latD) * cos(lon))* sphere.radius + sphere.center.x,
-				(sin(lat + latD))* sphere.radius + sphere.center.y,
-				(cos(lat + latD) * sin(lon))* sphere.radius + sphere.center.z };
+			b = {
+				(cos(lat + latD) * cos(lon)) * sphere.radius + sphere.center.x,
+				(sin(lat + latD)) * sphere.radius + sphere.center.y,
+				(cos(lat + latD) * sin(lon)) * sphere.radius + sphere.center.z };
 
-			c = { 
-				(cos(lat ) * cos(lon+lonD) * sphere.radius + sphere.center.x),
-				(sin(lat))* sphere.radius + sphere.center.y,
-				(cos(lat) * sin(lon+lonD) )* sphere.radius + sphere.center.z };
+			c = {
+				(cos(lat) * cos(lon + lonD) * sphere.radius + sphere.center.x),
+				(sin(lat)) * sphere.radius + sphere.center.y,
+				(cos(lat) * sin(lon + lonD)) * sphere.radius + sphere.center.z };
 
 
 			a = Transform(a, viewProjectionMatrix);
@@ -492,7 +494,7 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 			// a,b,cをScreen座標系まで変換...
 			// ab,bcで線を引く
 			Novice::DrawLine((int)a.x, (int)a.y, (int)b.x, (int)b.y, color);
-			Novice::DrawLine((int)a.x, (int)a.y, (int)c.x, (int)c.y ,color);
+			Novice::DrawLine((int)a.x, (int)a.y, (int)c.x, (int)c.y, color);
 		}
 	}
 }
@@ -506,7 +508,7 @@ Vector3 Normalize(const Vector3& v) {
 
 };
 /*-----------------------------------
-            02_00
+			02_00
 ---------------------------------------*/
 Vector3 Project(const Vector3& v1, const Vector3& v2) {
 	float m3 = Dot(v1, Normalize(v2));
@@ -518,7 +520,7 @@ Vector3 Project(const Vector3& v1, const Vector3& v2) {
 	return result;
 }
 
-Vector3 ClosestPoint(const Vector3& point ,const Segment& segment) {
+Vector3 ClosestPoint(const Vector3& point, const Segment& segment) {
 	Vector3 cp;
 	cp.x = point.x + segment.origin.x;
 	cp.y = point.y + segment.origin.y;
@@ -544,25 +546,9 @@ Vector3 Parpendicular(const Vector3& vector) {
 	return { 0.0f,-vector.z,vector.y };
 }
 
-void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
-	Vector3 center = Multiply(plane.distance, plane.normal);
-	Vector3 perpendiculars[4];
-	perpendiculars[0] = Normalize(Parpendicular(plane.normal)); // 2
-	perpendiculars[1] = { -perpendiculars[0].x, -perpendiculars[0].y, -perpendiculars[0].z };// 3
-	perpendiculars[2] = Cross(plane.normal, perpendiculars[0]); // 4
-	perpendiculars[3] = { -perpendiculars[2].x, -perpendiculars[2].y, -perpendiculars[2].z }; // 5
-	// 6
-	Vector3 points[4];
-	for (int32_t index = 0; index < 4; ++index) {
-		Vector3 extend = Multiply(2.0f, perpendiculars[index]);
-		Vector3 point = Add(center, extend);
-		points[index] = Transform(Transform(point, viewProjectionMatrix), viewportMatrix);
-	}
-	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[2].x, (int)points[2].y, color);
-	Novice::DrawLine((int)points[2].x, (int)points[2].y, (int)points[1].x, (int)points[1].y, color);
-	Novice::DrawLine((int)points[1].x, (int)points[1].y, (int)points[3].x, (int)points[3].y, color);
-	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[3].x, (int)points[3].y, color);
-}
+//void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+//	
+//}
 
 void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
 	Triangle t;
@@ -571,35 +557,91 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 	t.vertices[1] = Transform(Transform(triangle.vertices[1], viewProjectionMatrix), viewportMatrix);
 	t.vertices[2] = Transform(Transform(triangle.vertices[2], viewProjectionMatrix), viewportMatrix);
 
-	Novice::DrawTriangle((int)t.vertices[0].x, (int)t.vertices[0].y, (int)t.vertices[1].x, (int)t.vertices[1].y, (int)t.vertices[2].x, (int)t.vertices[2].y,
-		color, kFillModeWireFrame);
+	Novice::DrawTriangle(
+		(int)t.vertices[0].x, (int)t.vertices[0].y,
+		(int)t.vertices[1].x, (int)t.vertices[1].y,
+		(int)t.vertices[2].x, (int)t.vertices[2].y,
+		color,
+		kFillModeWireFrame);
+
+
+
+
+
+
+	//Vector3 center = Multiply(triangle.distance, triangle.normal);
+	//Vector3 perpendiculars[4];
+	//perpendiculars[0] = Normalize(Parpendicular(triangle.normal)); // 2
+	//perpendiculars[1] = { -perpendiculars[0].x, -perpendiculars[0].y, -perpendiculars[0].z };// 3
+	//perpendiculars[2] = Cross(triangle.normal, perpendiculars[0]); // 4
+	//perpendiculars[3] = { -perpendiculars[2].x, -perpendiculars[2].y, -perpendiculars[2].z }; // 5
+	//// 6
+	//Vector3 points[4];
+	//for (int32_t index = 0; index < 4; ++index) {
+	//	Vector3 extend = Multiply(2.0f, perpendiculars[index]);
+	//	Vector3 point = Add(center, extend);
+	//	points[index] = Transform(Transform(point, viewProjectionMatrix), viewportMatrix);
+	//}
+	//Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[2].x, (int)points[2].y, color);
+	//Novice::DrawLine((int)points[2].x, (int)points[2].y, (int)points[1].x, (int)points[1].y, color);
+	//Novice::DrawLine((int)points[1].x, (int)points[1].y, (int)points[3].x, (int)points[3].y, color);
+	//Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[3].x, (int)points[3].y, color);
+
+
+
 }
 
 bool IsCollision(const Triangle& triangle, const Segment& segment) {
 	bool g = false;
 
-	// まず数直判定を行うために、法線と線のない席を求める
-	float dot = Dot(segment.diff, plane.normal);
+	Vector3 v1 = Subtract(triangle.vertices[1], triangle.vertices[0]);
+	Vector3 v2 = Subtract(triangle.vertices[2], triangle.vertices[1]);
 
+	Vector3 normal = Cross(v1, v2);
+	Normalize(normal);
+	
+
+	// まず数直判定を行うために、法線と線のない席を求める
+	float dot = Dot(segment.diff, normal);
+	float distance = Dot(normal,triangle.vertices[0]);
 	// 垂直=平行であるので、衝突しているはずがない
 	if (dot == 0.0f) {
 		return false;
 	}
 
 	// tを求める
-	float t = (plane.distance - Dot(line.origin, plane.normal)) / dot;
+	float t = (distance - Dot(segment.origin, normal)) / dot;
+	Vector3 p = Add(segment.origin, Multiply(t, segment.diff));
+
+	Vector3 v01 = Subtract(triangle.vertices[1], triangle.vertices[0]);
+	Vector3 v12 = Subtract(triangle.vertices[2], triangle.vertices[1]);
+	Vector3 v20 = Subtract(triangle.vertices[0], triangle.vertices[2]);
+
+	Vector3 v1p = Subtract(p, triangle.vertices[1]);
+	Vector3 v2p = Subtract(p, triangle.vertices[2]);
+	Vector3 v0p = Subtract(p, triangle.vertices[0]);
+
 	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
 	Vector3 cross01 = Cross(v01, v1p);
 	Vector3 cross12 = Cross(v12, v2p);
 	Vector3 cross20 = Cross(v20, v0p);
-	if(
-		Dot(cross01, triangle. ) >= 0.0f&&
-		Dot(cross01, triangle. ) >= 0.0f&&
-		Dot(cross01, triangle. ) >= 0.0f)
+
+
+
+	if (
+		Dot(cross01, normal) >= 0.0f &&
+		Dot(cross12, normal) >= 0.0f &&
+		Dot(cross20, normal) >= 0.0f)
 	{
 		g = true;
 	}
 	else { g = false; }
+	ImGui::Begin("t");
+	ImGui::Text("%f", t);
+	ImGui::End();
+
+
+
 	return g;
 }
 
@@ -635,12 +677,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{0.1f,0,0}
 	};
 
-	Sphere sphere = { { 0,0,0 } ,0.5};
-	
+	Sphere sphere = { { 0,0,0 } ,0.5 };
+
 
 	sphere.color = WHITE;
-	
-	
+
+
 	Plane plane;
 	plane.normal = { 5,1,5 };
 	plane.distance = 5;
@@ -651,6 +693,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Segment segment{ {-1.5f,0.0f,-0.5f},{-1.5f,1.0f,1.5f} };
 
 	Triangle triangle;
+	
 	triangle.vertices[0] = {
 		0,1,0
 	};
@@ -713,19 +756,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
 		Vector3 end = Transform(Transform(Add(segment.origin, segment.diff), worldViewProjectionMatrix), viewportMatrix);
 
-		
+
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
 		ImGui::DragFloat3("Sphere", &sphere.center.x, 0.01f);
 		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
-		ImGui::DragFloat3("Plane", &plane.normal.x, 0.01f);
+	
 
 		ImGui::DragFloat3("Line", &segment.origin.x, 0.01f);
-		
 
-	
+		ImGui::DragFloat3("triangle0", &triangle.vertices[0].x, 0.01f);
+		ImGui::DragFloat3("triangle1", &triangle.vertices[1].x, 0.01f);
+		ImGui::DragFloat3("triangle2", &triangle.vertices[2].x, 0.01f);
+
+
+
 		ImGui::End();
 
 		plane.normal = Normalize(plane.normal);
@@ -733,7 +780,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		if (f == true) {
 			segment.color = RED;
 		}
-		else { sphere.color = WHITE; }
+		else { segment.color = WHITE; }
 		///
 		/// ↑更新処理ここまで
 		///
@@ -742,10 +789,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), segment.color);
-		DrawTriangle(triangle,worldViewProjectionMatrix,viewportMatrix,WHITE);
+		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		//DrawSphere(sphere,worldViewProjectionMatrix,viewportMatrix, sphere.color);
-		DrawPlane(plane,worldViewProjectionMatrix,viewportMatrix,plane.color);
-		
+		//DrawPlane(triangle,worldViewProjectionMatrix,viewportMatrix,plane.color);
+
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		Novice::DrawTriangle(
 			int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
