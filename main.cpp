@@ -44,6 +44,12 @@ struct Triangle {
 	Vector3 vertices[3];//!< 頂点
 };
 
+struct AABB {
+	Vector3 min;
+	Vector3 max;
+	int color;
+};
+
 
 /*------------------------------------------------------------------
 						   MT3_01_00使用
@@ -454,7 +460,7 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 	const float kLonEvery = pi * 2.0f / (float)kSubdivision;  // 軽度分割1つ分の角度
 	const float kLatEvery = pi / (float)kSubdivision;  // 緯度分割1つ分の角度
 
-	
+
 	// 緯度の方向に分割 -π/2 ~ π/2
 	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
 		float lat = -pi / 2.0f + kLatEvery * latIndex;// 現在の緯度
@@ -466,19 +472,19 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 			const float latD = pi / kSubdivision;
 			const float lonD = 2 * pi / kSubdivision;
 			a = {
-				(cos(lat) * cos(lon))*sphere.radius +sphere.center.x,
-				(sin(lat))* sphere.radius + sphere.center.y,
-				(cos(lat) * sin(lon))* sphere.radius + sphere.center.z };
+				(cos(lat) * cos(lon)) * sphere.radius + sphere.center.x,
+				(sin(lat)) * sphere.radius + sphere.center.y,
+				(cos(lat) * sin(lon)) * sphere.radius + sphere.center.z };
 
-			b = { 
-				(cos(lat + latD) * cos(lon))* sphere.radius + sphere.center.x,
-				(sin(lat + latD))* sphere.radius + sphere.center.y,
-				(cos(lat + latD) * sin(lon))* sphere.radius + sphere.center.z };
+			b = {
+				(cos(lat + latD) * cos(lon)) * sphere.radius + sphere.center.x,
+				(sin(lat + latD)) * sphere.radius + sphere.center.y,
+				(cos(lat + latD) * sin(lon)) * sphere.radius + sphere.center.z };
 
-			c = { 
-				(cos(lat ) * cos(lon+lonD) * sphere.radius + sphere.center.x),
-				(sin(lat))* sphere.radius + sphere.center.y,
-				(cos(lat) * sin(lon+lonD) )* sphere.radius + sphere.center.z };
+			c = {
+				(cos(lat) * cos(lon + lonD) * sphere.radius + sphere.center.x),
+				(sin(lat)) * sphere.radius + sphere.center.y,
+				(cos(lat) * sin(lon + lonD)) * sphere.radius + sphere.center.z };
 
 
 			a = Transform(a, viewProjectionMatrix);
@@ -491,7 +497,7 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 			// a,b,cをScreen座標系まで変換...
 			// ab,bcで線を引く
 			Novice::DrawLine((int)a.x, (int)a.y, (int)b.x, (int)b.y, color);
-			Novice::DrawLine((int)a.x, (int)a.y, (int)c.x, (int)c.y ,color);
+			Novice::DrawLine((int)a.x, (int)a.y, (int)c.x, (int)c.y, color);
 		}
 	}
 }
@@ -505,7 +511,7 @@ Vector3 Normalize(const Vector3& v) {
 
 };
 /*-----------------------------------
-            02_00
+			02_00
 ---------------------------------------*/
 Vector3 Project(const Vector3& v1, const Vector3& v2) {
 	float m3 = Dot(v1, Normalize(v2));
@@ -517,7 +523,7 @@ Vector3 Project(const Vector3& v1, const Vector3& v2) {
 	return result;
 }
 
-Vector3 ClosestPoint(const Vector3& point ,const Segment& segment) {
+Vector3 ClosestPoint(const Vector3& point, const Segment& segment) {
 	Vector3 cp;
 	cp.x = point.x + segment.origin.x;
 	cp.y = point.y + segment.origin.y;
@@ -576,17 +582,58 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 		color, kFillModeWireFrame);
 }
 
-bool IsCollision(const Triangle& triangle, const Segment& segment) {
+bool IsCollision(const AABB& aabb1, const AABB& aabb2) {
 	bool g = false;
-	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
-	Vector3 cross01 = Cross(v01, v1p);
-	Vector3 cross12 = Cross(v12, v2p);
-	Vector3 cross20 = Cross(v20, v0p);
-	if(Dot(cross01,triangle.)){
+	if (
+		(aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x) &&
+		(aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y) && 
+		(aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z))
+	{
 		g = true;
 	}
 	else { g = false; }
 	return g;
+}
+
+void DrawAABB(const AABB& aabb ,const Matrix4x4& viewProjectionMatrix,const Matrix4x4&viewportMatrix,uint32_t color){
+	Vector3 minMinMin;
+	minMinMin = Transform(Transform({aabb.min.x,aabb.min.y ,aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 minMaxMin;
+	minMaxMin = Transform(Transform({ aabb.min.x,aabb.max.y ,aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMinMin;
+	maxMinMin = Transform(Transform({ aabb.max.x,aabb.min.y ,aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMaxMin;
+	maxMaxMin = Transform(Transform({ aabb.max.x,aabb.max.y ,aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+
+	Vector3 minMinMax;
+	minMinMax = Transform(Transform({ aabb.min.x,aabb.min.y ,aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 minMaxMax;
+	minMaxMax = Transform(Transform({ aabb.min.x,aabb.max.y ,aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMinMax;
+	maxMinMax = Transform(Transform({ aabb.max.x,aabb.min.y ,aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMaxMax;
+	maxMaxMax = Transform(Transform({ aabb.max.x,aabb.max.y ,aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+
+
+
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)minMaxMin.x, (int)minMaxMin.y, color);
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)maxMinMin.x, (int)maxMinMin.y, color);
+	Novice::DrawLine((int)minMaxMin.x, (int)minMaxMin.y, (int)maxMaxMin.x, (int)maxMaxMin.y, color);
+	Novice::DrawLine((int)maxMinMin.x, (int)maxMinMin.y, (int)maxMaxMin.x, (int)maxMaxMin.y, color);
+
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)minMinMax.x, (int)minMinMax.y, color);
+	Novice::DrawLine((int)minMaxMin.x, (int)minMaxMin.y, (int)minMaxMax.x, (int)minMaxMax.y, color);
+	Novice::DrawLine((int)maxMaxMin.x, (int)maxMaxMin.y, (int)maxMaxMax.x, (int)maxMaxMax.y, color);
+	Novice::DrawLine((int)maxMinMin.x, (int)maxMinMin.y, (int)maxMinMax.x, (int)maxMinMax.y, color);
+
+	Novice::DrawLine((int)minMinMax.x, (int)minMinMax.y, (int)minMaxMax.x, (int)minMaxMax.y, color);
+	Novice::DrawLine((int)minMinMax.x, (int)minMinMax.y, (int)maxMinMax.x, (int)maxMinMax.y, color);
+	Novice::DrawLine((int)minMaxMax.x, (int)minMaxMax.y, (int)maxMaxMax.x, (int)maxMaxMax.y, color);
+	Novice::DrawLine((int)maxMinMax.x, (int)maxMinMax.y, (int)maxMaxMax.x, (int)maxMaxMax.y, color);
+	/*Novice::DrawLine((int)minD.x, (int)minD.y, (int)minD.x, (int)maxD.y, color);
+	Novice::DrawLine((int)minD.x, (int)maxD.y, (int)maxD.x, (int)maxD.y, color);
+	Novice::DrawLine((int)minD.x, (int)minD.y, (int)maxD.x, (int)minD.y, color);*/
+
 }
 
 
@@ -621,12 +668,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{0.1f,0,0}
 	};
 
-	Sphere sphere = { { 0,0,0 } ,0.5};
-	
+	Sphere sphere = { { 0,0,0 } ,0.5 };
+
 
 	sphere.color = WHITE;
-	
-	
+
+
 	Plane plane;
 	plane.normal = { 5,1,5 };
 	plane.distance = 5;
@@ -647,6 +694,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	1,0,0
 	};
 
+	AABB aabb1;
+	aabb1.min = { -0.5f,-0.5f,-0.5f };
+	aabb1.max = { 0.0f,0.0f,0.0f };
+	aabb1.color = WHITE;
+
+	AABB aabb2;
+	aabb2.min = { 0.2f,0.2f,0.2f };
+	aabb2.max = { 1.0f,1.0f,1.0f };
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -697,7 +752,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
 		Vector3 end = Transform(Transform(Add(segment.origin, segment.diff), worldViewProjectionMatrix), viewportMatrix);
 
-		
+
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
@@ -707,17 +762,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("Plane", &plane.normal.x, 0.01f);
 
 		ImGui::DragFloat3("Line", &segment.origin.x, 0.01f);
-		
 
-	
+		ImGui::DragFloat3("min1", &aabb1.min.x, 0.01f);
+		ImGui::DragFloat3("max1", &aabb1.max.x,0.01f);
+		ImGui::DragFloat3("min2", &aabb2.min.x,0.01f);
+		ImGui::DragFloat3("max2", &aabb2.max.x,0.01f);
+
+
+
 		ImGui::End();
 
 		plane.normal = Normalize(plane.normal);
-		f = IsCollision(triangle, segment);
+		f = IsCollision(aabb1, aabb2);
 		if (f == true) {
-			sphere.color = RED;
+			aabb1.color = RED;
 		}
-		else { sphere.color = WHITE; }
+		else { aabb1.color = WHITE; }
 		///
 		/// ↑更新処理ここまで
 		///
@@ -725,11 +785,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
-		DrawTriangle(triangle,worldViewProjectionMatrix,viewportMatrix,WHITE);
-		DrawSphere(sphere,worldViewProjectionMatrix,viewportMatrix, sphere.color);
-		DrawPlane(plane,worldViewProjectionMatrix,viewportMatrix,plane.color);
-		
+		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1.color);
+		DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		/*Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
+		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, sphere.color);*/
+		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, plane.color);
+
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		Novice::DrawTriangle(
 			int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
