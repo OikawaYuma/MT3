@@ -529,18 +529,18 @@ float Length(const Vector3& v) {
 
 	return m3;
 };
-bool IsCollision(const Sphere& s1, const Plane& s2) {
-	bool g = false;
-	//Vector3 q = { s1.center.x - s2.normal.x * s2.distance,s1.center.y - s2.normal.y * s2.distance, s1.center.z - s2.normal.z * s2.distance, };
-	//float d = Dot(s2.normal, q);
-	// 2つの弾の中心点間の距離を求める
-	float distance = fabsf(Dot( s2.normal,s1.center) - s2.distance);
-	if (distance <= s1.radius) {
-		g = true;
-	}
-	else { g = false; }
-	return g;
-}
+//bool IsCollision(const Segment& segment, const Plane& plane) {
+//	bool g = false;
+//	//Vector3 q = { s1.center.x - s2.normal.x * s2.distance,s1.center.y - s2.normal.y * s2.distance, s1.center.z - s2.normal.z * s2.distance, };
+//	//float d = Dot(s2.normal, q);
+//	// 2つの弾の中心点間の距離を求める
+//	float distance = fabsf(Dot( s2.normal,s1.center) - s2.distance);
+//	if (distance <= s1.radius) {
+//		g = true;
+//	}
+//	else { g = false; }
+//	return g;
+//}
 
 Vector3 Parpendicular(const Vector3& vector) {
 	if (vector.x != 0.0f || vector.y != 0.0f) {
@@ -612,8 +612,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	
 	
 	Plane plane;
-	plane.normal = { 5,1,5 };
-	plane.distance = 5;
+	plane.normal = { 0,1,0 };
+	plane.distance = 1;
 	plane.color = WHITE;
 
 	bool f = false;
@@ -673,13 +673,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("Sphere", &sphere.center.x, 0.01f);
 		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
 		ImGui::DragFloat3("Plane", &plane.normal.x, 0.01f);
+		ImGui::DragFloat("PlaneD", &plane.distance, 0.01f);
 		
 
 	
 		ImGui::End();
 
 		plane.normal = Normalize(plane.normal);
-		f = IsCollision(sphere, plane);
+		//f = IsCollision(sphere, plane);
 		if (f == true) {
 			sphere.color = RED;
 		}
