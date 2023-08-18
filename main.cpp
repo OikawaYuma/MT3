@@ -577,6 +577,17 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 
 bool IsCollision(const Triangle& triangle, const Segment& segment) {
 	bool g = false;
+
+	// まず数直判定を行うために、法線と線のない席を求める
+	float dot = Dot(segment.diff, plane.normal);
+
+	// 垂直=平行であるので、衝突しているはずがない
+	if (dot == 0.0f) {
+		return false;
+	}
+
+	// tを求める
+	float t = (plane.distance - Dot(line.origin, plane.normal)) / dot;
 	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
 	Vector3 cross01 = Cross(v01, v1p);
 	Vector3 cross12 = Cross(v12, v2p);
