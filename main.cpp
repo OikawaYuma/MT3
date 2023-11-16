@@ -18,6 +18,11 @@ struct Sphere {
 	Vector3 center; //!< 中心点
 	float radius; //!< 半径
 	int color;
+	Vector3 pos;
+	Vector3 velocity;
+	Vector3 acceleration;
+	Matrix4x4 world;
+	Matrix4x4 worldView;
 };
 
 struct Line {
@@ -572,9 +577,15 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 	Novice::DrawLine((int)points[2].x, (int)points[2].y, (int)points[1].x, (int)points[1].y, color);
 	Novice::DrawLine((int)points[1].x, (int)points[1].y, (int)points[3].x, (int)points[3].y, color);
 	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[3].x, (int)points[3].y, color);
+}
 
-
-
+Vector3 Reflect(const Vector3& input, const Vector3& normal) {
+	Vector3 r;
+	Vector3 proj = Project(input, normal);
+	r.x = input.x - 2 * proj.x;
+	r.y = input.y - 2 * proj.y;
+	r.z = input.z - 2 * proj.z;
+	return r;
 }
 
 
@@ -610,6 +621,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	Sphere sphere = { { 0,0,0 } ,0.5};
+	sphere.pos = translate;
+	sphere.velocity = {0,0,0};
+	sphere.acceleration = { 0.0f,-0.098f,0.0f };
 	
 
 	sphere.color = WHITE;
@@ -619,6 +633,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	plane.normal = { 5,1,5 };
 	plane.distance = 5;
 	plane.color = WHITE;
+
 
 	bool f = false;
 
@@ -657,6 +672,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 
 
+		sphere.world = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, sphere.pos);
+		
 
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { cameraRotate }, cameraTranslate);
@@ -664,6 +681,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(1280) / float(720), 0.1f, 100.0f);
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(1280), float(720), 0.0f, 1.0f);
+		sphere.worldView = Multiply(sphere.world, Multiply(viewMatrix, projectionMatrix));
 		Vector3 screenVertices[3];
 		for (uint32_t i = 0; i < 3; ++i) {
 			Vector3 ndcVertex = Transform(kLocalkVertices[i], worldViewProjectionMatrix);
@@ -683,11 +701,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	
 		ImGui::End();
+		sphere.velocity = Add(sphere.velocity ,sphere.acceleration);
+		sphere.pos = Add(sphere.pos, sphere.velocity);
+
+
 
 		plane.normal = Normalize(plane.normal);
 		f = IsCollision(sphere, plane);
+	
 		if (f == true) {
-			sphere.color = RED;
+			sphere.velocity = Reflect(sphere.velocity, plane.normal);
+			sphere.color = WHITE;
 		}
 		else { sphere.color = WHITE; }
 		///
@@ -698,7 +722,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 
-		DrawSphere(sphere,worldViewProjectionMatrix,viewportMatrix, sphere.color);
+		DrawSphere(sphere,sphere.worldView,viewportMatrix, sphere.color);
 		DrawPlane(plane,worldViewProjectionMatrix,viewportMatrix,plane.color);
 		
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
