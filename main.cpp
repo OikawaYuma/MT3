@@ -538,13 +538,13 @@ float Length(const Vector3& v) {
 
 	return m3;
 };
-bool IsCollision(const Sphere& s1, const Plane& s2) {
+bool IsCollision(const Vector3& pos,float radius, const Plane& s2) {
 	bool g = false;
 	//Vector3 q = { s1.center.x - s2.normal.x * s2.distance,s1.center.y - s2.normal.y * s2.distance, s1.center.z - s2.normal.z * s2.distance, };
 	//float d = Dot(s2.normal, q);
 	// 2つの弾の中心点間の距離を求める
-	float distance = fabsf(Dot( s2.normal,s1.center) - s2.distance);
-	if (distance <= s1.radius) {
+	float distance = fabsf(Dot( s2.normal,pos) - s2.distance);
+	if (distance <= radius) {
 		g = true;
 	}
 	else { g = false; }
@@ -612,7 +612,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Vector3 translate{ 0.0f,0.0f,0.0f };
 
-	Vector3 cameraTranslate = { 0.0f,1.9f,-6.49f };
+	Vector3 cameraTranslate = { 0.0f,1.2f,-7.58f };
 	Vector3 cameraRotate = { 0.26f,0.0f,0.0f };
 	Vector3 kLocalkVertices[3] = {
 		{0,0.1f,0},
@@ -623,15 +623,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Sphere sphere = { { 0,0,0 } ,0.5};
 	sphere.pos = translate;
 	sphere.velocity = {0,0,0};
-	sphere.acceleration = { 0.0f,-0.098f,0.0f };
+	sphere.acceleration = { 0.0f,-0.0098f,0.0f };
 	
 
 	sphere.color = WHITE;
 	
 	
 	Plane plane;
-	plane.normal = { 5,1,5 };
-	plane.distance = 5;
+	plane.normal = { 0.430f,-0.903f,-0.10f };
+	plane.distance = 0.740f;
 	plane.color = WHITE;
 
 
@@ -694,26 +694,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
-		ImGui::DragFloat3("Sphere", &sphere.center.x, 0.01f);
+		ImGui::DragFloat3("Sphere", &sphere.pos.x, 0.01f);
 		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
 		ImGui::DragFloat3("Plane", &plane.normal.x, 0.01f);
+		ImGui::DragFloat("Plane", &plane.distance, 0.01f);
 		
 
 	
 		ImGui::End();
 		sphere.velocity = Add(sphere.velocity ,sphere.acceleration);
-		sphere.pos = Add(sphere.pos, sphere.velocity);
+		sphere.pos.x += sphere.velocity.x * 0.3f;
+		sphere.pos.y += sphere.velocity.y * 0.3f;
+		sphere.pos.z += sphere.velocity.z * 0.3f;
 
 
 
 		plane.normal = Normalize(plane.normal);
-		f = IsCollision(sphere, plane);
+		f = IsCollision(sphere.pos,sphere.radius, plane);
 	
 		if (f == true) {
 			sphere.velocity = Reflect(sphere.velocity, plane.normal);
-			sphere.color = WHITE;
+			sphere.color = RED;
 		}
-		else { sphere.color = WHITE; }
+		else { sphere.color = WHITE;
+		}
+		f = false;
 		///
 		/// ↑更新処理ここまで
 		///
