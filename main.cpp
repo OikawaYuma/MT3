@@ -19,6 +19,7 @@ struct Sphere {
 	float radius; //!< 半径
 	int color;
 	Vector3 pos;
+	float mass;
 	Vector3 velocity;
 	Vector3 acceleration;
 	Matrix4x4 world;
@@ -43,6 +44,7 @@ struct Plane {
 	Vector3 normal; // !< 法線
 	float distance; //!< 距離
 	int color;
+	
 };
 
 struct Triangle {
@@ -612,30 +614,35 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Vector3 translate{ 0.0f,0.0f,0.0f };
 
-	Vector3 cameraTranslate = { 0.0f,1.2f,-7.58f };
+	Vector3 cameraTranslate = { 0.0f,1.9f,-6.49f };
 	Vector3 cameraRotate = { 0.26f,0.0f,0.0f };
 	Vector3 kLocalkVertices[3] = {
 		{0,0.1f,0},
 		{-0.1f,0,0},
 		{0.1f,0,0}
 	};
-
+	float deltaTime = 60.0f;
 	Sphere sphere = { { 0,0,0 } ,0.5};
-	sphere.pos = translate;
+	sphere.pos = { 0.8f,1.2f,0.3f };
 	sphere.velocity = {0,0,0};
-	sphere.acceleration = { 0.0f,-0.0098f,0.0f };
+	sphere.acceleration = { 0.0f,-9.8f,0.0f };
 	
-
+	sphere.radius = 0.05f;
 	sphere.color = WHITE;
 	
 	
 	Plane plane;
-	plane.normal = { 0.430f,-0.903f,-0.10f };
-	plane.distance = 0.740f;
+	plane.normal = Normalize({ -0.2f,0.9f,-0.3f });
+	plane.distance = 0.0f;
 	plane.color = WHITE;
 
 
-	bool f = false;
+	Plane plane2;
+	plane2.normal = { -0.882f,-0.424f,-0.139f };
+	plane2.distance = 2.740f;
+	plane2.color = WHITE;
+
+
 
 	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
 
@@ -698,27 +705,51 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
 		ImGui::DragFloat3("Plane", &plane.normal.x, 0.01f);
 		ImGui::DragFloat("Plane", &plane.distance, 0.01f);
+		ImGui::DragFloat3("Plane2", &plane2.normal.x, 0.01f);
+		ImGui::DragFloat("Plane2", &plane2.distance, 0.01f);
+		ImGui::Text("hh");
+		if(ImGui::Button("Reset")) {
+			sphere.pos = { 0.8f,1.2f,0.3f };
+			sphere.velocity = { 0,0,0 };
+			sphere.acceleration = { 0.0f,-9.8f,0.0f };
+		}
 		
 
 	
 		ImGui::End();
-		sphere.velocity = Add(sphere.velocity ,sphere.acceleration);
-		sphere.pos.x += sphere.velocity.x * 0.3f;
-		sphere.pos.y += sphere.velocity.y * 0.3f;
-		sphere.pos.z += sphere.velocity.z * 0.3f;
+		sphere.velocity = Add(sphere.velocity, { sphere.acceleration.x / deltaTime,sphere.acceleration.y / deltaTime,sphere.acceleration.z  /deltaTime });
+	
+		sphere.pos.x += sphere.velocity.x / deltaTime;
+		sphere.pos.y += sphere.velocity.y / deltaTime;
+		sphere.pos.z += sphere.velocity.z / deltaTime;
 
 
 
 		plane.normal = Normalize(plane.normal);
-		f = IsCollision(sphere.pos,sphere.radius, plane);
+		plane2.normal = Normalize(plane2.normal);
 	
-		if (f == true) {
+		if (IsCollision(sphere.pos, sphere.radius, plane)) {
 			sphere.velocity = Reflect(sphere.velocity, plane.normal);
+			sphere.velocity.x *= 0.7f;
+			sphere.velocity.y *= 0.7f;
+			sphere.velocity.z *= 0.7f;
 			sphere.color = RED;
 		}
 		else { sphere.color = WHITE;
 		}
-		f = false;
+
+		//if (IsCollision(sphere.pos, sphere.radius, plane2)) {
+		//	sphere.velocity = Reflect(sphere.velocity, plane2.normal);
+		//	/*sphere.velocity.x *= 0.;
+		//	sphere.velocity.y *= 0.5;
+		//	sphere.velocity.z *= 0.5;*/
+
+		//	sphere.color = RED;
+		//}
+		//else {
+		//	sphere.color = WHITE;
+		//}
+	
 		///
 		/// ↑更新処理ここまで
 		///
@@ -729,11 +760,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawSphere(sphere,sphere.worldView,viewportMatrix, sphere.color);
 		DrawPlane(plane,worldViewProjectionMatrix,viewportMatrix,plane.color);
+		DrawPlane(plane2, worldViewProjectionMatrix, viewportMatrix, plane2.color);
 		
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		Novice::DrawTriangle(
+		/*Novice::DrawTriangle(
 			int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
-			int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid);
+			int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid);*/
 		VectorScreenPrintf(0, 0, cross, "Cross");
 
 
