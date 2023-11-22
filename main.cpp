@@ -63,7 +63,15 @@ Vector3 Multiply(float scalar, const Vector3& v) {
 
 	return m3;
 };
-
+Matrix4x4 Add(const Matrix4x4 m1, const Matrix4x4& m2) {
+	Matrix4x4 m4;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			m4.m[i][j] = m1.m[i][j] + m2.m[i][j];
+		}
+	}
+	return m4;
+};
 // 1. 透視投影行列
 Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip) {
 	Matrix4x4 m4;
@@ -397,7 +405,7 @@ void MatrixScreenPrintf(int x, int y, const Matrix4x4& matrix, const char* label
 
 	for (int row = 0; row < 4; ++row) {
 		for (int column = 0; column < 4; ++column) {
-			Novice::ScreenPrintf(x + column * kColumnWidth, y + row * kRowHeight + 20, "%6.02f", matrix.m[row][column], label);
+			Novice::ScreenPrintf(x + column * kColumnWidth, y + row * kRowHeight + 20, "%6.03f", matrix.m[row][column], label);
 		}
 	}
 }
@@ -589,6 +597,134 @@ Vector3 Reflect(const Vector3& input, const Vector3& normal) {
 	r.z = input.z - 2 * proj.z;
 	return r;
 }
+//Matrix4x4 MakeCosS(float angle) {
+//	Matrix4x4 S;
+//	S.m[0][0] = cos(angle);
+//	S.m[0][1] = 0;
+//	S.m[0][2] = 0;
+//	S.m[0][3] = 0;
+//
+//	S.m[1][0] = 0;
+//	S.m[1][1] = cos(angle);
+//	S.m[1][2] = 0;
+//	S.m[1][3] = 0;
+//
+//	S.m[2][0] = 0;
+//	S.m[2][1] = 0;
+//	S.m[2][2] = cos(angle);
+//	S.m[2][3] = 0;
+//
+//	S.m[3][0] = 0;
+//	S.m[3][1] = 0;
+//	S.m[3][2] = 0;
+//	S.m[3][3] = 1;
+//
+//	return S;
+//}
+Matrix4x4 MakeScaleMatrix(const Vector3& scale) {
+
+	Matrix4x4 m4;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			m4.m[i][j] = 0;
+		}
+	}
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			if (i == j) {
+				m4.m[i][j] = 1.0f;
+			}
+		}
+	}
+	m4.m[0][0] = scale.x;
+	m4.m[1][1] = scale.y;
+	m4.m[2][2] = scale.z;
+	return m4;
+
+};
+Matrix4x4 MakeCosS(float angle) {
+	Matrix4x4 S;
+	S.m[0][0] = cos(angle);
+	S.m[0][1] = 0;
+	S.m[0][2] = 0;
+	S.m[0][3] = 0;
+
+	S.m[1][0] = 0;
+	S.m[1][1] = cos(angle);
+	S.m[1][2] = 0;
+	S.m[1][3] = 0;
+
+	S.m[2][0] = 0;
+	S.m[2][1] = 0;
+	S.m[2][2] = cos(angle);
+	S.m[2][3] = 0;
+
+	S.m[3][0] = 0;
+	S.m[3][1] = 0;
+	S.m[3][2] = 0;
+	S.m[3][3] = 1;
+
+	return S;
+}
+Matrix4x4 Subtract(const Matrix4x4 m1, const Matrix4x4& m2) {
+	Matrix4x4 m4;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			m4.m[i][j] = m1.m[i][j] - m2.m[i][j];
+		}
+	}
+	return m4;
+};
+
+
+Matrix4x4 MakeRotateAxisAngle(const Vector3& axis, float angle) {
+	Matrix4x4 r;
+	Matrix4x4 S = MakeCosS( angle);
+	Matrix4x4 P;
+	//Matrix4x4 P = MakeCosS(angle);
+	//Matrix4x4 C = MakeCosS(angle);;
+	P.m[0][0] = axis.x*axis.x* (1 - cos(angle));
+	P.m[0][1] = axis.x * axis.y * (1 - cos(angle));
+	P.m[0][2] = axis.x * axis.z * (1 - cos(angle));
+	P.m[0][3] = 0;
+	
+	P.m[1][0] = axis.x*axis.y * (1 - cos(angle));
+	P.m[1][1] = axis.y * axis.y * (1 - cos(angle));
+	P.m[1][2] = axis.y*axis.z * (1 - cos(angle));
+	P.m[1][3] = 0;
+	
+	P.m[2][0] = axis.x*axis.z * (1 - cos(angle));
+	P.m[2][1] = axis.y*axis.z * (1 - cos(angle));
+	P.m[2][2] = axis.z*axis.z * (1 - cos(angle));
+	P.m[2][3] = 0;
+	
+	P.m[3][0] = 0;
+	P.m[3][1] = 0;
+	P.m[3][2] = 0;
+	P.m[3][3] = 0;
+	Matrix4x4 C;
+	C.m[0][0] = 0;
+	C.m[0][1] = -axis.z *sin(angle) ;
+	C.m[0][2] = axis.y * sin(angle);
+	C.m[0][3] = 0;
+	
+	C.m[1][0] = axis.z * sin(angle);
+	C.m[1][1] = 0;
+	C.m[1][2] = -axis.x * sin(angle);
+	C.m[1][3] = 0;
+	
+	C.m[2][0] = -axis.y * sin(angle);
+	C.m[2][1] = axis.x * sin(angle);
+	C.m[2][2] = 0;
+	C.m[2][3] = 0;
+	
+	C.m[3][0] = 0;
+	C.m[3][1] = 0;
+	C.m[3][2] = 0;
+	C.m[3][3] = 0;
+	r = Add(S, Subtract(P, C));
+	return r;
+}
 
 
 
@@ -602,45 +738,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 
-	Vector3 v1 = { 1.2f,-3.9f,2.5f };
+	Vector3 axis = Normalize({ 1.0f,1.0f,1.0f });
+	float angle = 0.44f;
+	Matrix4x4 rotateMatrix = {0};
+	rotateMatrix = MakeRotateAxisAngle(axis, angle);
 
-	Vector3 v2 = { 2.8f,0.4f,-1.3f };
-
-	Vector3 cross = Cross(v1, v2);
-
-	VectorScreenPrintf(0, 0, cross, "Cross");
-
-	Vector3 rotate{ 0.0f,0.0f,0.0f };
-
-	Vector3 translate{ 0.0f,0.0f,0.0f };
-
-	Vector3 cameraTranslate = { 0.0f,1.9f,-6.49f };
-	Vector3 cameraRotate = { 0.26f,0.0f,0.0f };
-	Vector3 kLocalkVertices[3] = {
-		{0,0.1f,0},
-		{-0.1f,0,0},
-		{0.1f,0,0}
-	};
-	float deltaTime = 60.0f;
-	Sphere sphere = { { 0,0,0 } ,0.5};
-	sphere.pos = { 0.8f,1.2f,0.3f };
-	sphere.velocity = {0,0,0};
-	sphere.acceleration = { 0.0f,-9.8f,0.0f };
-	
-	sphere.radius = 0.05f;
-	sphere.color = WHITE;
-	
-	
-	Plane plane;
-	plane.normal = Normalize({ -0.2f,0.9f,-0.3f });
-	plane.distance = 0.0f;
-	plane.color = WHITE;
-
-
-	Plane plane2;
-	plane2.normal = { -0.882f,-0.424f,-0.139f };
-	plane2.distance = 2.740f;
-	plane2.color = WHITE;
 
 
 
@@ -658,98 +760,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓更新処理ここから
 		///
-		if (keys[DIK_W]) {
-			translate.z += 0.1f;
-		}
-		if (keys[DIK_S]) {
-			translate.z -= 0.1f;
-		}
-		if (keys[DIK_D]) {
-			translate.x += 0.1f;
-		}
-		if (keys[DIK_A]) {
-			translate.x -= 0.1f;
-		}
-
-		if (keys[DIK_R]) {
-			rotate.y += 0.1f;
-		}
-		if (keys[DIK_Q]) {
-			rotate.y -= 0.1f;
-		}
-
-
-		sphere.world = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, sphere.pos);
 		
 
-		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
-		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { cameraRotate }, cameraTranslate);
-		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
-		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(1280) / float(720), 0.1f, 100.0f);
-		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-		Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(1280), float(720), 0.0f, 1.0f);
-		sphere.worldView = Multiply(sphere.world, Multiply(viewMatrix, projectionMatrix));
-		Vector3 screenVertices[3];
-		for (uint32_t i = 0; i < 3; ++i) {
-			Vector3 ndcVertex = Transform(kLocalkVertices[i], worldViewProjectionMatrix);
-			screenVertices[i] = Transform(ndcVertex, viewportMatrix);
-		}
 
-		
-		
-
-		ImGui::Begin("Window");
-		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
-		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
-		ImGui::DragFloat3("Sphere", &sphere.pos.x, 0.01f);
-		ImGui::DragFloat("Sphere", &sphere.radius, 0.01f);
-		ImGui::DragFloat3("Plane", &plane.normal.x, 0.01f);
-		ImGui::DragFloat("Plane", &plane.distance, 0.01f);
-		ImGui::DragFloat3("Plane2", &plane2.normal.x, 0.01f);
-		ImGui::DragFloat("Plane2", &plane2.distance, 0.01f);
-		ImGui::Text("hh");
-		if(ImGui::Button("Reset")) {
-			sphere.pos = { 0.8f,1.2f,0.3f };
-			sphere.velocity = { 0,0,0 };
-			sphere.acceleration = { 0.0f,-9.8f,0.0f };
-		}
-		
-
-	
-		ImGui::End();
-		sphere.velocity = Add(sphere.velocity, { sphere.acceleration.x / deltaTime,sphere.acceleration.y / deltaTime,sphere.acceleration.z  /deltaTime });
-	
-		sphere.pos.x += sphere.velocity.x / deltaTime;
-		sphere.pos.y += sphere.velocity.y / deltaTime;
-		sphere.pos.z += sphere.velocity.z / deltaTime;
-
-
-
-		plane.normal = Normalize(plane.normal);
-		plane2.normal = Normalize(plane2.normal);
-	
-		if (IsCollision(sphere.pos, sphere.radius, plane)) {
-			sphere.velocity = Reflect(sphere.velocity, plane.normal);
-			sphere.velocity.x *= 0.7f;
-			sphere.velocity.y *= 0.7f;
-			sphere.velocity.z *= 0.7f;
-			sphere.color = RED;
-		}
-		else { sphere.color = WHITE;
-		}
-
-		//if (IsCollision(sphere.pos, sphere.radius, plane2)) {
-		//	sphere.velocity = Reflect(sphere.velocity, plane2.normal);
-		//	/*sphere.velocity.x *= 0.;
-		//	sphere.velocity.y *= 0.5;
-		//	sphere.velocity.z *= 0.5;*/
-
-		//	sphere.color = RED;
-		//}
-		//else {
-		//	sphere.color = WHITE;
-		//}
-	
 		///
 		/// ↑更新処理ここまで
 		///
@@ -758,18 +771,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 
-		DrawSphere(sphere,sphere.worldView,viewportMatrix, sphere.color);
-		DrawPlane(plane,worldViewProjectionMatrix,viewportMatrix,plane.color);
-		DrawPlane(plane2, worldViewProjectionMatrix, viewportMatrix, plane2.color);
 		
-		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		/*Novice::DrawTriangle(
-			int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
-			int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid);*/
-		VectorScreenPrintf(0, 0, cross, "Cross");
 
-
-		MatrixScreenPrintf(0, 20, viewportMatrix, "v");
+		MatrixScreenPrintf(0, 0, rotateMatrix, "rotateMatrix");
 
 
 		///
