@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <Vector3.h>
 #include<imGui.h>
+
+#include<algorithm>
 const char kWindowTitle[] = "LE2B_05_オイカワユウマ";
 
 
@@ -592,6 +594,84 @@ Vector3 Reflect(const Vector3& input, const Vector3& normal) {
 
 
 
+
+
+struct AABB {
+	Vector3 min;
+	Vector3 max;
+	int color;
+};
+
+
+bool IsCollisionAABB(const AABB& aabb,float radius,Vector3 pos) {
+	bool g = false;
+
+	// 最近接点を求める
+	Vector3 closestPoint{
+		std::clamp(pos.x,aabb.min.x,aabb.max.x),
+		std::clamp(pos.y,aabb.min.y,aabb.max.y),
+		std::clamp(pos.z,aabb.min.z,aabb.max.z)
+	};
+
+	// 最近接点と弾の中心との距離を求める
+	float distance = Length({
+		closestPoint.x - pos.x,
+		closestPoint.y - pos.y,
+		closestPoint.z - pos.z });
+	// 距離が半径よりも小さければ衝突
+	if (distance <= radius) {
+		g = true;
+	}
+	else { g = false; }
+	return g;
+}
+
+void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	Vector3 minMinMin;
+	minMinMin = Transform(Transform({ aabb.min.x,aabb.min.y ,aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 minMaxMin;
+	minMaxMin = Transform(Transform({ aabb.min.x,aabb.max.y ,aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMinMin;
+	maxMinMin = Transform(Transform({ aabb.max.x,aabb.min.y ,aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMaxMin;
+	maxMaxMin = Transform(Transform({ aabb.max.x,aabb.max.y ,aabb.min.z }, viewProjectionMatrix), viewportMatrix);
+
+	Vector3 minMinMax;
+	minMinMax = Transform(Transform({ aabb.min.x,aabb.min.y ,aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 minMaxMax;
+	minMaxMax = Transform(Transform({ aabb.min.x,aabb.max.y ,aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMinMax;
+	maxMinMax = Transform(Transform({ aabb.max.x,aabb.min.y ,aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMaxMax;
+	maxMaxMax = Transform(Transform({ aabb.max.x,aabb.max.y ,aabb.max.z }, viewProjectionMatrix), viewportMatrix);
+
+
+
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)minMaxMin.x, (int)minMaxMin.y, color);
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)maxMinMin.x, (int)maxMinMin.y, color);
+	Novice::DrawLine((int)minMaxMin.x, (int)minMaxMin.y, (int)maxMaxMin.x, (int)maxMaxMin.y, color);
+	Novice::DrawLine((int)maxMinMin.x, (int)maxMinMin.y, (int)maxMaxMin.x, (int)maxMaxMin.y, color);
+
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)minMinMax.x, (int)minMinMax.y, color);
+	Novice::DrawLine((int)minMaxMin.x, (int)minMaxMin.y, (int)minMaxMax.x, (int)minMaxMax.y, color);
+	Novice::DrawLine((int)maxMaxMin.x, (int)maxMaxMin.y, (int)maxMaxMax.x, (int)maxMaxMax.y, color);
+	Novice::DrawLine((int)maxMinMin.x, (int)maxMinMin.y, (int)maxMinMax.x, (int)maxMinMax.y, color);
+
+	Novice::DrawLine((int)minMinMax.x, (int)minMinMax.y, (int)minMaxMax.x, (int)minMaxMax.y, color);
+	Novice::DrawLine((int)minMinMax.x, (int)minMinMax.y, (int)maxMinMax.x, (int)maxMinMax.y, color);
+	Novice::DrawLine((int)minMaxMax.x, (int)minMaxMax.y, (int)maxMaxMax.x, (int)maxMaxMax.y, color);
+	Novice::DrawLine((int)maxMinMax.x, (int)maxMinMax.y, (int)maxMaxMax.x, (int)maxMaxMax.y, color);
+	/*Novice::DrawLine((int)minD.x, (int)minD.y, (int)minD.x, (int)maxD.y, color);
+	Novice::DrawLine((int)minD.x, (int)maxD.y, (int)maxD.x, (int)maxD.y, color);
+	Novice::DrawLine((int)minD.x, (int)minD.y, (int)maxD.x, (int)minD.y, color);*/
+
+}
+
+
+
+
+
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -642,7 +722,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	plane2.distance = 2.740f;
 	plane2.color = WHITE;
 
+	AABB aabb1;
+	aabb1.min = { -0.5f,-0.5f,-0.5f };
+	aabb1.max = { 0.0f,0.0f,0.0f };
+	aabb1.color = WHITE;
 
+	bool f = false;
 
 	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
 
@@ -713,6 +798,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			sphere.velocity = { 0,0,0 };
 			sphere.acceleration = { 0.0f,-9.8f,0.0f };
 		}
+		ImGui::DragFloat3("min1", &aabb1.min.x, 0.01f);
+		ImGui::DragFloat3("max1", &aabb1.max.x, 0.01f);
 		
 
 	
@@ -728,7 +815,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		plane.normal = Normalize(plane.normal);
 		plane2.normal = Normalize(plane2.normal);
 	
-		if (IsCollision(sphere.pos, sphere.radius, plane)) {
+		/*if (IsCollision(sphere.pos, sphere.radius, plane)) {
 			sphere.velocity = Reflect(sphere.velocity, plane.normal);
 			sphere.velocity.x *= 0.7f;
 			sphere.velocity.y *= 0.7f;
@@ -736,7 +823,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			sphere.color = RED;
 		}
 		else { sphere.color = WHITE;
+		}*/
+
+
+		f = IsCollisionAABB(aabb1, sphere.radius,sphere.pos);
+		if (f == true) {
+			aabb1.color = RED;
 		}
+		else { aabb1.color = WHITE; }
 
 		//if (IsCollision(sphere.pos, sphere.radius, plane2)) {
 		//	sphere.velocity = Reflect(sphere.velocity, plane2.normal);
@@ -757,7 +851,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-
+		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1.color);
 		DrawSphere(sphere,sphere.worldView,viewportMatrix, sphere.color);
 		DrawPlane(plane,worldViewProjectionMatrix,viewportMatrix,plane.color);
 		DrawPlane(plane2, worldViewProjectionMatrix, viewportMatrix, plane2.color);
