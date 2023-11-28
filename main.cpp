@@ -9,6 +9,7 @@
 #include<imGui.h>
 
 #include<algorithm>
+#include <iostream>
 const char kWindowTitle[] = "LE2B_05_オイカワユウマ";
 
 
@@ -26,6 +27,16 @@ struct Sphere {
 	Vector3 acceleration;
 	Matrix4x4 world;
 	Matrix4x4 worldView;
+};
+
+struct AABB {
+	Vector3 min;
+	Vector3 max;
+	Vector3 pos;
+	float width;
+	float height;
+	float length;
+	int color;
 };
 
 struct Line {
@@ -46,7 +57,7 @@ struct Plane {
 	Vector3 normal; // !< 法線
 	float distance; //!< 距離
 	int color;
-	
+
 };
 
 struct Triangle {
@@ -463,7 +474,7 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 	const float kLonEvery = pi * 2.0f / (float)kSubdivision;  // 軽度分割1つ分の角度
 	const float kLatEvery = pi / (float)kSubdivision;  // 緯度分割1つ分の角度
 
-	
+
 	// 緯度の方向に分割 -π/2 ~ π/2
 	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
 		float lat = -pi / 2.0f + kLatEvery * latIndex;// 現在の緯度
@@ -475,19 +486,19 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 			const float latD = pi / kSubdivision;
 			const float lonD = 2 * pi / kSubdivision;
 			a = {
-				(cos(lat) * cos(lon))*sphere.radius +sphere.center.x,
-				(sin(lat))* sphere.radius + sphere.center.y,
-				(cos(lat) * sin(lon))* sphere.radius + sphere.center.z };
+				(cos(lat) * cos(lon)) * sphere.radius + sphere.center.x,
+				(sin(lat)) * sphere.radius + sphere.center.y,
+				(cos(lat) * sin(lon)) * sphere.radius + sphere.center.z };
 
-			b = { 
-				(cos(lat + latD) * cos(lon))* sphere.radius + sphere.center.x,
-				(sin(lat + latD))* sphere.radius + sphere.center.y,
-				(cos(lat + latD) * sin(lon))* sphere.radius + sphere.center.z };
+			b = {
+				(cos(lat + latD) * cos(lon)) * sphere.radius + sphere.center.x,
+				(sin(lat + latD)) * sphere.radius + sphere.center.y,
+				(cos(lat + latD) * sin(lon)) * sphere.radius + sphere.center.z };
 
-			c = { 
-				(cos(lat ) * cos(lon+lonD) * sphere.radius + sphere.center.x),
-				(sin(lat))* sphere.radius + sphere.center.y,
-				(cos(lat) * sin(lon+lonD) )* sphere.radius + sphere.center.z };
+			c = {
+				(cos(lat) * cos(lon + lonD) * sphere.radius + sphere.center.x),
+				(sin(lat)) * sphere.radius + sphere.center.y,
+				(cos(lat) * sin(lon + lonD)) * sphere.radius + sphere.center.z };
 
 
 			a = Transform(a, viewProjectionMatrix);
@@ -500,7 +511,7 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 			// a,b,cをScreen座標系まで変換...
 			// ab,bcで線を引く
 			Novice::DrawLine((int)a.x, (int)a.y, (int)b.x, (int)b.y, color);
-			Novice::DrawLine((int)a.x, (int)a.y, (int)c.x, (int)c.y ,color);
+			Novice::DrawLine((int)a.x, (int)a.y, (int)c.x, (int)c.y, color);
 		}
 	}
 }
@@ -514,7 +525,7 @@ Vector3 Normalize(const Vector3& v) {
 
 };
 /*-----------------------------------
-            02_00
+			02_00
 ---------------------------------------*/
 Vector3 Project(const Vector3& v1, const Vector3& v2) {
 	float m3 = Dot(v1, Normalize(v2));
@@ -526,7 +537,7 @@ Vector3 Project(const Vector3& v1, const Vector3& v2) {
 	return result;
 }
 
-Vector3 ClosestPoint(const Vector3& point ,const Segment& segment) {
+Vector3 ClosestPoint(const Vector3& point, const Segment& segment) {
 	Vector3 cp;
 	cp.x = point.x + segment.origin.x;
 	cp.y = point.y + segment.origin.y;
@@ -542,12 +553,12 @@ float Length(const Vector3& v) {
 
 	return m3;
 };
-bool IsCollision(const Vector3& pos,float radius, const Plane& s2) {
+bool IsCollision(const Vector3& pos, float radius, const Plane& s2) {
 	bool g = false;
 	//Vector3 q = { s1.center.x - s2.normal.x * s2.distance,s1.center.y - s2.normal.y * s2.distance, s1.center.z - s2.normal.z * s2.distance, };
 	//float d = Dot(s2.normal, q);
 	// 2つの弾の中心点間の距離を求める
-	float distance = fabsf(Dot( s2.normal,pos) - s2.distance);
+	float distance = fabsf(Dot(s2.normal, pos) - s2.distance);
 	if (distance <= radius) {
 		g = true;
 	}
@@ -596,14 +607,10 @@ Vector3 Reflect(const Vector3& input, const Vector3& normal) {
 
 
 
-struct AABB {
-	Vector3 min;
-	Vector3 max;
-	int color;
-};
 
 
-bool IsCollisionAABB(const AABB& aabb,float radius,Vector3 pos) {
+
+bool IsCollisionAABB(const AABB& aabb, float radius, Vector3 pos) {
 	bool g = false;
 
 	// 最近接点を求める
@@ -668,7 +675,25 @@ void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Mat
 }
 
 
+// ベクトルの差を計算する関数
+Vector3 subtract(const Vector3& a, const Vector3& b) {
+	return { a.x - b.x, a.y - b.y, a.z - b.z };
+}
 
+// ベクトルの外積を計算する関数
+Vector3 crossProduct(const Vector3& a, const Vector3& b) {
+	return {
+		a.y * b.z - a.z * b.y,
+		a.z * b.x - a.x * b.z,
+		a.x * b.y - a.y * b.x
+	};
+}
+
+// ベクトルを正規化する関数
+Vector3 normalize(const Vector3& v) {
+	float length = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+	return { v.x / length, v.y / length, v.z / length };
+}
 
 
 
@@ -702,15 +727,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{0.1f,0,0}
 	};
 	float deltaTime = 60.0f;
-	Sphere sphere = { { 0,0,0 } ,0.5};
+	Sphere sphere = { { 0,0,0 } ,0.5 };
 	sphere.pos = { 0.8f,1.2f,0.3f };
-	sphere.velocity = {0,0,0};
+	sphere.velocity = { 0,0,0 };
 	sphere.acceleration = { 0.0f,-9.8f,0.0f };
-	
+
 	sphere.radius = 0.05f;
 	sphere.color = WHITE;
-	
-	
+
+
 	Plane plane;
 	plane.normal = Normalize({ -0.2f,0.9f,-0.3f });
 	plane.distance = 0.0f;
@@ -723,8 +748,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	plane2.color = WHITE;
 
 	AABB aabb1;
-	aabb1.min = { -0.5f,-0.5f,-0.5f };
-	aabb1.max = { 0.0f,0.0f,0.0f };
+	aabb1.pos = { 0.0f,0.0f,0.0f };
+	aabb1.width = 1.0f;
+	aabb1.height = 1.0f;
+	aabb1.length = 1.0f;
+	aabb1.min = {
+		aabb1.pos.x - aabb1.width,
+		aabb1.pos.y - aabb1.height,
+		aabb1.pos.z - aabb1.length };
+	aabb1.max = {
+		aabb1.pos.x + aabb1.width,
+		aabb1.pos.y + aabb1.height,
+		aabb1.pos.z + aabb1.length };
 	aabb1.color = WHITE;
 
 	bool f = false;
@@ -765,7 +800,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 		sphere.world = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, sphere.pos);
-		
+
 
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { cameraRotate }, cameraTranslate);
@@ -780,8 +815,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			screenVertices[i] = Transform(ndcVertex, viewportMatrix);
 		}
 
-		
-		
+
+
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
@@ -793,19 +828,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("Plane2", &plane2.normal.x, 0.01f);
 		ImGui::DragFloat("Plane2", &plane2.distance, 0.01f);
 		ImGui::Text("hh");
-		if(ImGui::Button("Reset")) {
+		if (ImGui::Button("Reset")) {
 			sphere.pos = { 0.8f,1.2f,0.3f };
 			sphere.velocity = { 0,0,0 };
 			sphere.acceleration = { 0.0f,-9.8f,0.0f };
 		}
-		ImGui::DragFloat3("min1", &aabb1.min.x, 0.01f);
-		ImGui::DragFloat3("max1", &aabb1.max.x, 0.01f);
-		
+		ImGui::DragFloat("width", &aabb1.width, 0.01f);
+		ImGui::DragFloat("height", &aabb1.height, 0.01f);
 
-	
+
+
 		ImGui::End();
-		sphere.velocity = Add(sphere.velocity, { sphere.acceleration.x / deltaTime,sphere.acceleration.y / deltaTime,sphere.acceleration.z  /deltaTime });
-	
+		sphere.velocity = Add(sphere.velocity, { sphere.acceleration.x / deltaTime,sphere.acceleration.y / deltaTime,sphere.acceleration.z / deltaTime });
+
 		sphere.pos.x += sphere.velocity.x / deltaTime;
 		sphere.pos.y += sphere.velocity.y / deltaTime;
 		sphere.pos.z += sphere.velocity.z / deltaTime;
@@ -814,7 +849,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		plane.normal = Normalize(plane.normal);
 		plane2.normal = Normalize(plane2.normal);
-	
+
 		/*if (IsCollision(sphere.pos, sphere.radius, plane)) {
 			sphere.velocity = Reflect(sphere.velocity, plane.normal);
 			sphere.velocity.x *= 0.7f;
@@ -826,8 +861,46 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}*/
 
 
-		f = IsCollisionAABB(aabb1, sphere.radius,sphere.pos);
+		f = IsCollisionAABB(aabb1, sphere.radius, sphere.pos);
 		if (f == true) {
+			Vector3 vertices[] = {
+			{aabb1.pos.x - aabb1.width, aabb1.pos.y - aabb1.height, aabb1.pos.z - aabb1.length},
+			{aabb1.pos.x + aabb1.width, aabb1.pos.y - aabb1.height, aabb1.pos.z - aabb1.length},
+			{aabb1.pos.x + aabb1.width, aabb1.pos.y + aabb1.height, aabb1.pos.z - aabb1.length},
+			{aabb1.pos.x - aabb1.width, aabb1.pos.y + aabb1.height, aabb1.pos.z - aabb1.length},
+			{aabb1.pos.x - aabb1.width, aabb1.pos.y - aabb1.height, aabb1.pos.z + aabb1.length},
+			{aabb1.pos.x + aabb1.width, aabb1.pos.y - aabb1.height, aabb1.pos.z - aabb1.length},
+			{aabb1.pos.x + aabb1.width, aabb1.pos.y + aabb1.height, aabb1.pos.z + aabb1.length},
+			{aabb1.pos.x - aabb1.width, aabb1.pos.y + aabb1.height, aabb1.pos.z + aabb1.length}
+			};
+			// 各面の頂点インデックス（頂点の時計回りまたは反時計回りの順序が重要）
+			int faceIndices[][4] = {
+				{0, 1, 2, 3},  // Bottom
+				{4, 5, 6, 7},  // Top
+				{0, 3, 7, 4},  // Front
+				{1, 2, 6, 5},  // Back
+				{0, 4, 5, 1},  // Left
+				{2, 3, 7, 6}   // Right
+			};
+
+			// 各面の法線ベクトルを計算して表示
+			for (int i = 0; i < 6; ++i) {
+				Vector3 edge1 = subtract(vertices[faceIndices[i][1]], vertices[faceIndices[i][0]]);
+				Vector3 edge2 = subtract(vertices[faceIndices[i][3]], vertices[faceIndices[i][0]]);
+				Vector3 normal = crossProduct(edge1, edge2);
+				normal = normalize(normal);
+
+				std::cout << "Face " << i + 1 << " Normal: (" << normal.x << ", " << normal.y << ", " << normal.z << ")\n";
+			}
+
+
+
+
+			sphere.velocity = Reflect(sphere.velocity, plane.normal);
+			sphere.velocity.x *= 0.7f;
+			sphere.velocity.y *= 0.7f;
+			sphere.velocity.z *= 0.7f;
+			sphere.color = RED;
 			aabb1.color = RED;
 		}
 		else { aabb1.color = WHITE; }
@@ -843,7 +916,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//else {
 		//	sphere.color = WHITE;
 		//}
-	
+
 		///
 		/// ↑更新処理ここまで
 		///
@@ -852,10 +925,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1.color);
-		DrawSphere(sphere,sphere.worldView,viewportMatrix, sphere.color);
-		DrawPlane(plane,worldViewProjectionMatrix,viewportMatrix,plane.color);
+		DrawSphere(sphere, sphere.worldView, viewportMatrix, sphere.color);
+		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, plane.color);
 		DrawPlane(plane2, worldViewProjectionMatrix, viewportMatrix, plane2.color);
-		
+
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		/*Novice::DrawTriangle(
 			int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
