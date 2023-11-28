@@ -889,8 +889,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				Vector3 edge2 = subtract(vertices[faceIndices[i][3]], vertices[faceIndices[i][0]]);
 				Vector3 normal = crossProduct(edge1, edge2);
 				normal = normalize(normal);
-
-				std::cout << "Face " << i + 1 << " Normal: (" << normal.x << ", " << normal.y << ", " << normal.z << ")\n";
+				Plane planeTemp;
+				planeTemp.normal = normal;
+				planeTemp.distance = 
+				if (IsCollision(sphere.pos, sphere.radius, planeTemp)) {
+					sphere.velocity = Reflect(sphere.velocity, planeTemp.normal);
+					sphere.velocity.x *= 0.7f;
+					sphere.velocity.y *= 0.7f;
+					sphere.velocity.z *= 0.7f;
+					sphere.color = RED;
+				}
+				else {
+					sphere.color = WHITE;
+				}
+				//std::cout << "Face " << i + 1 << " Normal: (" << normal.x << ", " << normal.y << ", " << normal.z << ")\n";
 			}
 
 
