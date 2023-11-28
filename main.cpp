@@ -52,6 +52,11 @@ struct AABB {
 	int color;
 };
 
+struct OBB {
+	Vector3 center;
+	Vector3 orientations[3];
+	Vector3 size;
+};
 
 /*------------------------------------------------------------------
 						   MT3_01_00使用
@@ -584,11 +589,13 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 		color, kFillModeWireFrame);
 }
 
-bool IsCollision(const AABB& aabb, const Sphere& sphere) {
+
+
+bool IsCollisionAABB(const AABB& aabb, const Sphere& sphere) {
 	bool g = false;
 
 	// 最近接点を求める
-	Vector3 closestPoint{ 
+	Vector3 closestPoint{
 		std::clamp(sphere.center.x,aabb.min.x,aabb.max.x),
 		std::clamp(sphere.center.y,aabb.min.y,aabb.max.y),
 		std::clamp(sphere.center.z,aabb.min.z,aabb.max.z)
@@ -600,7 +607,7 @@ bool IsCollision(const AABB& aabb, const Sphere& sphere) {
 		closestPoint.y - sphere.center.y,
 		closestPoint.z - sphere.center.z });
 	// 距離が半径よりも小さければ衝突
-	if(distance<= sphere.radius){
+	if (distance <= sphere.radius) {
 		g = true;
 	}
 	else { g = false; }
@@ -648,6 +655,49 @@ void DrawAABB(const AABB& aabb ,const Matrix4x4& viewProjectionMatrix,const Matr
 
 }
 
+void DrawOBB(const OBB& obb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	Vector3 minMinMin;
+	minMinMin = Transform(Transform({ -obb.size.x,-obb.size.y ,-obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 minMaxMin;
+	minMaxMin = Transform(Transform({ -obb.size.x,obb.size.y ,-obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMinMin;
+	maxMinMin = Transform(Transform({ obb.size.x,-obb.size.y ,-obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMaxMin;
+	maxMaxMin = Transform(Transform({ obb.size.x,obb.size.y ,-obb.size.z }, viewProjectionMatrix), viewportMatrix);
+
+	Vector3 minMinMax;
+	minMinMax = Transform(Transform({ -obb.size.x,-obb.size.y ,obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 minMaxMax;
+	minMaxMax = Transform(Transform({-obb.size.x,obb.size.y ,obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMinMax;
+	maxMinMax = Transform(Transform({ obb.size.x,-obb.size.y ,obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMaxMax;
+	maxMaxMax = Transform(Transform({ obb.size.x,obb.size.y ,obb.size.z }, viewProjectionMatrix), viewportMatrix);
+
+
+
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)minMaxMin.x, (int)minMaxMin.y, color);
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)maxMinMin.x, (int)maxMinMin.y, color);
+	Novice::DrawLine((int)minMaxMin.x, (int)minMaxMin.y, (int)maxMaxMin.x, (int)maxMaxMin.y, color);
+	Novice::DrawLine((int)maxMinMin.x, (int)maxMinMin.y, (int)maxMaxMin.x, (int)maxMaxMin.y, color);
+
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)minMinMax.x, (int)minMinMax.y, color);
+	Novice::DrawLine((int)minMaxMin.x, (int)minMaxMin.y, (int)minMaxMax.x, (int)minMaxMax.y, color);
+	Novice::DrawLine((int)maxMaxMin.x, (int)maxMaxMin.y, (int)maxMaxMax.x, (int)maxMaxMax.y, color);
+	Novice::DrawLine((int)maxMinMin.x, (int)maxMinMin.y, (int)maxMinMax.x, (int)maxMinMax.y, color);
+
+	Novice::DrawLine((int)minMinMax.x, (int)minMinMax.y, (int)minMaxMax.x, (int)minMaxMax.y, color);
+	Novice::DrawLine((int)minMinMax.x, (int)minMinMax.y, (int)maxMinMax.x, (int)maxMinMax.y, color);
+	Novice::DrawLine((int)minMaxMax.x, (int)minMaxMax.y, (int)maxMaxMax.x, (int)maxMaxMax.y, color);
+	Novice::DrawLine((int)maxMinMax.x, (int)maxMinMax.y, (int)maxMaxMax.x, (int)maxMaxMax.y, color);
+};
+//bool IsCollision(const OBB& obb, const Sphere& sphere) {
+//	bool g = false;
+//
+//
+//
+//	return g;
+//}
 
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -669,6 +719,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	VectorScreenPrintf(0, 0, cross, "Cross");
 
 	Vector3 rotate{ 0.0f,0.0f,0.0f };
+	Vector3 OBBtranslate{ 0.0f,0.0f,0.0f };
+	Vector3 OBBrotate{ 0.0f,0.0f,0.0f };
+	OBB obb{
+		.center{-1.0f,0.0f,0.0f},
+		.orientations = {{1.0f,0.0f,0.0f},
+						 {0.0f,1.0f,0.0f},
+						 {0.0f,0.0f,1.0f}},
+		.size{0.5f,0.5f,0.5f}
+	};
 
 	Vector3 translate{ 0.0f,0.0f,0.0f };
 
@@ -691,7 +750,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	plane.distance = 5;
 	plane.color = WHITE;
 
-	bool f = false;
+	//bool f = false;
 
 	Segment segment{ {-1.5f,0.0f,-0.5f},{-1.5f,1.0f,1.5f} };
 
@@ -728,25 +787,69 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 		if (keys[DIK_W]) {
-			translate.z += 0.1f;
+			OBBtranslate.z += 0.1f;
 		}
 		if (keys[DIK_S]) {
-			translate.z -= 0.1f;
+			OBBtranslate.z -= 0.1f;
 		}
 		if (keys[DIK_D]) {
-			translate.x += 0.1f;
+			OBBtranslate.x += 0.1f;
 		}
 		if (keys[DIK_A]) {
-			translate.x -= 0.1f;
+			OBBtranslate.x -= 0.1f;
 		}
-		
-
 		if (keys[DIK_R]) {
-			rotate.y += 0.1f;
+			OBBrotate.y += 0.1f;
 		}
 		if (keys[DIK_Q]) {
-			rotate.y -= 0.1f;
+			OBBrotate.y -= 0.1f;
 		}
+
+		// 回転行列を作成
+		Matrix4x4 rotateMatrix = Multiply(MakeRotateXMatrix(OBBrotate.x), Multiply(MakeRotateYMatrix(OBBrotate.y), MakeRotateZMatrix(OBBrotate.z)));
+		Matrix4x4 translateMatrix;
+		
+		translateMatrix.m[3][0] = OBBtranslate.x;
+		translateMatrix.m[3][1] = OBBtranslate.y;
+		translateMatrix.m[3][2] = OBBtranslate.z;
+	
+		Matrix4x4 OBBWorldMatrix = rotateMatrix;
+		OBBWorldMatrix.m[3][0] = translateMatrix.m[3][0];
+		OBBWorldMatrix.m[3][1] = translateMatrix.m[3][1];
+		OBBWorldMatrix.m[3][2] = translateMatrix.m[3][2];
+		Matrix4x4 OBBInverseWorldMatrix = { 0 };
+		OBBInverseWorldMatrix = Inverse(OBBWorldMatrix);
+		
+
+		// 回転行列から軸を抽出
+		obb.orientations[0].x = rotateMatrix.m[0][0];
+		obb.orientations[0].y = rotateMatrix.m[0][1];
+		obb.orientations[0].z = rotateMatrix.m[0][2];
+
+		obb.orientations[1].x = rotateMatrix.m[1][0];
+		obb.orientations[1].y = rotateMatrix.m[1][1];
+		obb.orientations[1].z = rotateMatrix.m[1][2];
+
+		obb.orientations[2].x = rotateMatrix.m[2][0];
+		obb.orientations[2].y = rotateMatrix.m[2][1];
+		obb.orientations[2].z = rotateMatrix.m[2][2];
+
+
+		Vector3 centerInOBBLoacalSpace =
+			Transform(sphere.center, OBBInverseWorldMatrix);
+		AABB aabbOBBLoacal;
+		aabbOBBLoacal.min = { -obb.size.x,-obb.size.y ,-obb.size.z };
+		aabbOBBLoacal.max = obb.size;
+
+		Sphere sphereOBBLocal{ centerInOBBLoacalSpace,sphere.radius };
+
+		// ローカル空間で衝突判定
+		if (IsCollisionAABB(aabbOBBLoacal, sphereOBBLocal)) {
+			sphere.color = RED;
+		}
+		else { sphere.color = WHITE; }
+
+
 
 
 
@@ -761,7 +864,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Vector3 ndcVertex = Transform(kLocalkVertices[i], worldViewProjectionMatrix);
 			screenVertices[i] = Transform(ndcVertex, viewportMatrix);
 		}
-
+		Matrix4x4 OBBworldViewProjectionMatrix = Multiply(OBBWorldMatrix, Multiply(viewMatrix, projectionMatrix));
+		Matrix4x4 worldInverseViewProjectionMatrix = Multiply(OBBInverseWorldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
 		Vector3 end = Transform(Transform(Add(segment.origin, segment.diff), worldViewProjectionMatrix), viewportMatrix);
 
@@ -785,12 +889,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		ImGui::End();
 
-		plane.normal = Normalize(plane.normal);
-		f = IsCollision(aabb1, sphere);
-		if (f == true) {
-			aabb1.color = RED;
-		}
-		else { aabb1.color = WHITE; }
+		
 		///
 		/// ↑更新処理ここまで
 		///
@@ -798,21 +897,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1.color);
-		//DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1.color);
+		DrawOBB(obb, OBBworldViewProjectionMatrix, viewportMatrix, WHITE);
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, sphere.color);
-		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, plane.color);
+		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, plane.color);
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		Novice::DrawTriangle(
-			int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
-			int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid);
-		VectorScreenPrintf(0, 0, cross, "Cross");
+		
+		///VectorScreenPrintf(0, 0, cross, "Cross");
 
 
-		MatrixScreenPrintf(0, 20, viewportMatrix, "v");
+		//atrixScreenPrintf(0, 20, viewportMatrix, "v");
 
 
 		///
