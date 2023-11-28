@@ -739,6 +739,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		if (keys[DIK_A]) {
 			translate.x -= 0.1f;
 		}
+		
 
 		if (keys[DIK_R]) {
 			rotate.y += 0.1f;
