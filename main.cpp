@@ -10,6 +10,7 @@
 
 #include<algorithm>
 #include <iostream>
+
 const char kWindowTitle[] = "LE2B_05_オイカワユウマ";
 
 
@@ -695,8 +696,91 @@ Vector3 normalize(const Vector3& v) {
 	return { v.x / length, v.y / length, v.z / length };
 }
 
+// 原点から平面までの距離を計算する関数
+float distanceToPlane(const Vector3& normal, const Vector3& pointOnPlane) {
+	return -(normal.x * pointOnPlane.x + normal.y * pointOnPlane.y + normal.z * pointOnPlane.z);
+}
+
+// ベクトルの内積を計算する関数
+float dotProduct(const Vector3& a, const Vector3& b) {
+	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+// 指定した点から平面までの距離を計算する関数
+float adistanceToPlane(const Vector3& normal, const Vector3& pointOnPlane, const Vector3& fromPoint) {
+	Vector3 vectorToPoint = subtract(fromPoint, pointOnPlane);
+	return dotProduct(normal, vectorToPoint);
+}
 
 
+struct OBB {
+	Vector3 center;
+	Vector3 orientations[3];
+	Vector3 size;
+};
+
+void DrawOBB(const OBB& obb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	Vector3 minMinMin;
+	minMinMin = Transform(Transform({ -obb.size.x,-obb.size.y ,-obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 minMaxMin;
+	minMaxMin = Transform(Transform({ -obb.size.x,obb.size.y ,-obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMinMin;
+	maxMinMin = Transform(Transform({ obb.size.x,-obb.size.y ,-obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMaxMin;
+	maxMaxMin = Transform(Transform({ obb.size.x,obb.size.y ,-obb.size.z }, viewProjectionMatrix), viewportMatrix);
+
+	Vector3 minMinMax;
+	minMinMax = Transform(Transform({ -obb.size.x,-obb.size.y ,obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 minMaxMax;
+	minMaxMax = Transform(Transform({ -obb.size.x,obb.size.y ,obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMinMax;
+	maxMinMax = Transform(Transform({ obb.size.x,-obb.size.y ,obb.size.z }, viewProjectionMatrix), viewportMatrix);
+	Vector3 maxMaxMax;
+	maxMaxMax = Transform(Transform({ obb.size.x,obb.size.y ,obb.size.z }, viewProjectionMatrix), viewportMatrix);
+
+
+
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)minMaxMin.x, (int)minMaxMin.y, RED);
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)maxMinMin.x, (int)maxMinMin.y, RED);
+	Novice::DrawLine((int)minMaxMin.x, (int)minMaxMin.y, (int)maxMaxMin.x, (int)maxMaxMin.y, RED);
+	Novice::DrawLine((int)maxMinMin.x, (int)maxMinMin.y, (int)maxMaxMin.x, (int)maxMaxMin.y, RED);
+
+	Novice::DrawLine((int)minMinMin.x, (int)minMinMin.y, (int)minMinMax.x, (int)minMinMax.y, color);
+	Novice::DrawLine((int)minMaxMin.x, (int)minMaxMin.y, (int)minMaxMax.x, (int)minMaxMax.y, BLUE);
+	Novice::DrawLine((int)maxMaxMin.x, (int)maxMaxMin.y, (int)maxMaxMax.x, (int)maxMaxMax.y, 0xFFFF00FF);
+	Novice::DrawLine((int)maxMinMin.x, (int)maxMinMin.y, (int)maxMinMax.x, (int)maxMinMax.y, 0xFF00FFFF);
+
+	Novice::DrawLine((int)minMinMax.x, (int)minMinMax.y, (int)minMaxMax.x, (int)minMaxMax.y, GREEN);
+	Novice::DrawLine((int)minMinMax.x, (int)minMinMax.y, (int)maxMinMax.x, (int)maxMinMax.y, GREEN);
+	Novice::DrawLine((int)minMaxMax.x, (int)minMaxMax.y, (int)maxMaxMax.x, (int)maxMaxMax.y, GREEN);
+	Novice::DrawLine((int)maxMinMax.x, (int)maxMinMax.y, (int)maxMaxMax.x, (int)maxMaxMax.y, GREEN);
+};
+
+Vector3 multiplyMatrixVector(const Matrix4x4& mat, const Vector3& vec) {
+	Vector3 result;
+	result.x = mat.m[0][0] * vec.x + mat.m[1][0] * vec.y + mat.m[2][0] * vec.z + mat.m[3][0];
+	result.y = mat.m[0][1] * vec.x + mat.m[1][1] * vec.y + mat.m[2][1] * vec.z + mat.m[3][1];
+	result.z = mat.m[0][2] * vec.x + mat.m[1][2] * vec.y + mat.m[2][2] * vec.z + mat.m[3][2];
+	return result;
+}
+
+Vector3 computeNormal(const Vector3& v0, const Vector3& v1, const Vector3& v2) {
+	Vector3 edge1 = { v1.x - v0.x, v1.y - v0.y, v1.z - v0.z };
+	Vector3 edge2 = { v2.x - v0.x, v2.y - v0.y, v2.z - v0.z };
+
+	Vector3 normal = {
+		edge1.y * edge2.z - edge1.z * edge2.y,
+		edge1.z * edge2.x - edge1.x * edge2.z,
+		edge1.x * edge2.y - edge1.y * edge2.x
+	};
+
+	// 法線を正規化
+	float length = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+	normal.x /= length;
+	normal.y /= length;
+	normal.z /= length;
+
+	return normal;
+}
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -728,7 +812,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 	float deltaTime = 60.0f;
 	Sphere sphere = { { 0,0,0 } ,0.5 };
-	sphere.pos = { 0.8f,1.2f,0.3f };
+	sphere.pos = { 0.0f,1.2f,0.0f };
 	sphere.velocity = { 0,0,0 };
 	sphere.acceleration = { 0.0f,-9.8f,0.0f };
 
@@ -741,6 +825,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	plane.distance = 0.0f;
 	plane.color = WHITE;
 
+	Vector3 tmpNormal = {0};
 
 	Plane plane2;
 	plane2.normal = { -0.882f,-0.424f,-0.139f };
@@ -762,7 +847,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		aabb1.pos.z + aabb1.length };
 	aabb1.color = WHITE;
 
-	bool f = false;
+	//bool f = false;
+
+	Vector3 OBBtranslate{ 0.0f,0.0f,0.0f };
+	Vector3 OBBrotate{ 0.0f,0.0f,0.0f };
+	OBB obb{
+		.center{-1.0f,0.0f,0.0f},
+		.orientations = {{1.0f,0.0f,0.0f},
+						 {0.0f,1.0f,0.0f},
+						 {0.0f,0.0f,1.0f}},
+		.size{0.5f,0.5f,0.5f}
+	};
+
+	AABB aabbOBBLoacal;
+	aabbOBBLoacal.min = { -obb.size.x,-obb.size.y ,-obb.size.z };
+	aabbOBBLoacal.max = obb.size;
 
 	// 各辺を結んだベクトルと、頂点と衝突点pを結んだ
 
@@ -779,24 +878,172 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 		if (keys[DIK_W]) {
-			translate.z += 0.1f;
+			OBBtranslate.z += 0.1f;
 		}
 		if (keys[DIK_S]) {
-			translate.z -= 0.1f;
+			OBBtranslate.z -= 0.1f;
 		}
 		if (keys[DIK_D]) {
-			translate.x += 0.1f;
+			OBBtranslate.x += 0.1f;
 		}
 		if (keys[DIK_A]) {
-			translate.x -= 0.1f;
+			OBBtranslate.x -= 0.1f;
 		}
-
 		if (keys[DIK_R]) {
-			rotate.y += 0.1f;
+			OBBrotate.y += 0.1f;
 		}
 		if (keys[DIK_Q]) {
-			rotate.y -= 0.1f;
+			OBBrotate.y -= 0.1f;
 		}
+		if (keys[DIK_T]) {
+			OBBrotate.x += 0.1f;
+		}
+		if (keys[DIK_Y]) {
+			OBBrotate.x -= 0.1f;
+		}
+		if (keys[DIK_G]) {
+			OBBrotate.z += 0.1f;
+		}
+		if (keys[DIK_H]) {
+			OBBrotate.z -= 0.1f;
+		}
+
+		if (keys[DIK_I]) {
+			obb.size.x+= 0.1f;
+		}
+		if (keys[DIK_O]) {
+			obb.size.y += 0.1f;
+		}
+		if (keys[DIK_P]) {
+			obb.size.z += 0.1f;
+		}
+
+		if (keys[DIK_J]) {
+			obb.size.x -= 0.1f;
+		}
+		if (keys[DIK_K]) {
+			obb.size.y -= 0.1f;
+		}
+		if (keys[DIK_L]) {
+			obb.size.z -= 0.1f;
+		}
+		// 回転行列を作成
+		Matrix4x4 rotateMatrix = Multiply(MakeRotateXMatrix(OBBrotate.x), Multiply(MakeRotateYMatrix(OBBrotate.y), MakeRotateZMatrix(OBBrotate.z)));
+		Matrix4x4 translateMatrix;
+
+		translateMatrix.m[3][0] = OBBtranslate.x;
+		translateMatrix.m[3][1] = OBBtranslate.y;
+		translateMatrix.m[3][2] = OBBtranslate.z;
+
+		Matrix4x4 OBBWorldMatrix = rotateMatrix;
+		OBBWorldMatrix.m[3][0] = translateMatrix.m[3][0];
+		OBBWorldMatrix.m[3][1] = translateMatrix.m[3][1];
+		OBBWorldMatrix.m[3][2] = translateMatrix.m[3][2];
+		Matrix4x4 OBBInverseWorldMatrix = { 0 };
+		OBBInverseWorldMatrix = Inverse(OBBWorldMatrix);
+
+
+		// 回転行列から軸を抽出
+		obb.orientations[0].x = rotateMatrix.m[0][0];
+		obb.orientations[0].y = rotateMatrix.m[0][1];
+		obb.orientations[0].z = rotateMatrix.m[0][2];
+
+		obb.orientations[1].x = rotateMatrix.m[1][0];
+		obb.orientations[1].y = rotateMatrix.m[1][1];
+		obb.orientations[1].z = rotateMatrix.m[1][2];
+
+		obb.orientations[2].x = rotateMatrix.m[2][0];
+		obb.orientations[2].y = rotateMatrix.m[2][1];
+		obb.orientations[2].z = rotateMatrix.m[2][2];
+
+
+		Vector3 centerInOBBLoacalSpace =
+			Transform(sphere.pos, OBBInverseWorldMatrix);
+		
+		aabbOBBLoacal.min = { -obb.size.x,-obb.size.y ,-obb.size.z };
+		aabbOBBLoacal.max = obb.size;
+
+		Sphere sphereOBBLocal;
+		sphereOBBLocal.pos = centerInOBBLoacalSpace;
+		sphereOBBLocal.radius = sphere.radius;
+
+		// ローカル空間で衝突判定
+		/*if (IsCollisionAABB(aabbOBBLoacal, sphereOBBLocal.radius,sphereOBBLocal.pos)) {
+			sphere.color = RED;
+		}
+		else { sphere.color = WHITE; }*/
+		Vector3 vertices[]
+			= {
+		{aabbOBBLoacal.min.x, aabbOBBLoacal.min.y, aabbOBBLoacal.min.z},
+		{aabbOBBLoacal.max.x, aabbOBBLoacal.min.y, aabbOBBLoacal.min.z},
+		{aabbOBBLoacal.max.x, aabbOBBLoacal.max.y, aabbOBBLoacal.min.z},
+		{aabbOBBLoacal.min.x, aabbOBBLoacal.max.y, aabbOBBLoacal.min.z},
+		{aabbOBBLoacal.min.x, aabbOBBLoacal.min.y, aabbOBBLoacal.max.z},
+		{aabbOBBLoacal.max.x, aabbOBBLoacal.min.y, aabbOBBLoacal.max.z},
+		{aabbOBBLoacal.max.x, aabbOBBLoacal.max.y, aabbOBBLoacal.max.z},
+		{aabbOBBLoacal.min.x, aabbOBBLoacal.max.y, aabbOBBLoacal.max.z}
+		};
+
+		for (int i = 0; i < 8; ++i) {
+			vertices[i] = multiplyMatrixVector(OBBWorldMatrix, vertices[i]);
+		}
+		if (IsCollisionAABB(aabbOBBLoacal, sphereOBBLocal.radius, sphereOBBLocal.pos)) {
+			
+			// 各面の頂点インデックス（頂点の時計回りまたは反時計回りの順序が重要）
+			int faceIndices[][4] = {
+				//{0, 1, 2, 3},  // Bottom
+				{1, 0, 3, 2},  // Bottom
+				{4, 5, 6, 7},  // Top
+				{2, 3, 6, 7},  // Front
+				{1, 0, 5, 4},  // Back
+				{0, 4, 7, 3},  // Left
+				{5, 1, 2, 6}   // Right
+			};
+			 // 各面の法線を計算して表示
+        for (int i = 0; i < 6; ++i) {
+            Vector3 normal = computeNormal(vertices[faceIndices[i][0]], vertices[faceIndices[i][1]], vertices[faceIndices[i][2]]);
+            std::cout << "Face " << i + 1 << " Normal: (" << normal.x << ", " << normal.y << ", " << normal.z << ")\n";
+        }
+			// 各面の法線ベクトルを計算して表示
+			for (int i = 0; i < 6; ++i) {
+								Vector3 edge1 = subtract(vertices[faceIndices[i][1]], vertices[faceIndices[i][0]]);
+								Vector3 edge2 = subtract(vertices[faceIndices[i][3]], vertices[faceIndices[i][0]]);
+								Vector3 normal = crossProduct(edge1, edge2);
+				normal = normalize(normal);
+
+				// 法線面から指定した点までの距離を計算
+				float distance = adistanceToPlane(normal, vertices[faceIndices[i][0]], OBBtranslate);
+
+				Plane planeTemp;
+				planeTemp.normal = normal;
+				tmpNormal = normal;
+				planeTemp.distance = distance;
+				if (IsCollision(sphereOBBLocal.pos, sphereOBBLocal.radius, planeTemp)) {
+					sphere.velocity = Reflect(sphere.velocity, planeTemp.normal);
+					sphere.velocity.x *= 0.7f;
+					sphere.velocity.y *= 0.7f;
+					sphere.velocity.z *= 0.7f;
+					sphere.color = BLUE;
+				}
+				else {
+					//sphere.color = RED;
+				}
+				//std::cout << "Face " << i + 1 << " Normal: (" << normal.x << ", " << normal.y << ", " << normal.z << ")\n";
+			}
+
+
+
+
+			/*sphere.velocity = Reflect(sphere.velocity, plane.normal);
+			sphere.velocity.x *= 0.7f;
+			sphere.velocity.y *= 0.7f;
+			sphere.velocity.z *= 0.7f;*/
+			//sphere.color = RED;
+			//aabb1.color = RED;
+		}
+		else { //sphere.color = WHITE; 
+		}
+
 
 
 		sphere.world = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, sphere.pos);
@@ -809,6 +1056,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(1280), float(720), 0.0f, 1.0f);
 		sphere.worldView = Multiply(sphere.world, Multiply(viewMatrix, projectionMatrix));
+
+
+		Matrix4x4 OBBworldViewProjectionMatrix = Multiply(OBBWorldMatrix, Multiply(viewMatrix, projectionMatrix));
+		Matrix4x4 worldInverseViewProjectionMatrix = Multiply(OBBInverseWorldMatrix, Multiply(viewMatrix, projectionMatrix));
+
 		Vector3 screenVertices[3];
 		for (uint32_t i = 0; i < 3; ++i) {
 			Vector3 ndcVertex = Transform(kLocalkVertices[i], worldViewProjectionMatrix);
@@ -827,11 +1079,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat("Plane", &plane.distance, 0.01f);
 		ImGui::DragFloat3("Plane2", &plane2.normal.x, 0.01f);
 		ImGui::DragFloat("Plane2", &plane2.distance, 0.01f);
-		ImGui::Text("hh");
+		ImGui::Text("%f , %f, %f ",tmpNormal.x, tmpNormal.y, tmpNormal.z );
 		if (ImGui::Button("Reset")) {
-			sphere.pos = { 0.8f,1.2f,0.3f };
+			sphere.pos = { 0.0f,1.2f,0.0f };
 			sphere.velocity = { 0,0,0 };
 			sphere.acceleration = { 0.0f,-9.8f,0.0f };
+			sphere.color = WHITE;
+		}
+		if (ImGui::Button("rotateReset")) {
+			OBBrotate = { 0.0f,0.0f,0.0f };
+			
+		}
+		if (ImGui::Button("rotateX")) {
+			OBBrotate.x += 3.1415f/180*90;
+		}
+		if (ImGui::Button("rotateY")) {
+			OBBrotate.y += 3.1415f / 180*90;
+		}
+		if (ImGui::Button("rotateZ")) {
+			OBBrotate.z += 3.1415f / 180*90;
 		}
 		ImGui::DragFloat("width", &aabb1.width, 0.01f);
 		ImGui::DragFloat("height", &aabb1.height, 0.01f);
@@ -861,61 +1127,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}*/
 
 
-		f = IsCollisionAABB(aabb1, sphere.radius, sphere.pos);
-		if (f == true) {
-			Vector3 vertices[] = {
-			{aabb1.pos.x - aabb1.width, aabb1.pos.y - aabb1.height, aabb1.pos.z - aabb1.length},
-			{aabb1.pos.x + aabb1.width, aabb1.pos.y - aabb1.height, aabb1.pos.z - aabb1.length},
-			{aabb1.pos.x + aabb1.width, aabb1.pos.y + aabb1.height, aabb1.pos.z - aabb1.length},
-			{aabb1.pos.x - aabb1.width, aabb1.pos.y + aabb1.height, aabb1.pos.z - aabb1.length},
-			{aabb1.pos.x - aabb1.width, aabb1.pos.y - aabb1.height, aabb1.pos.z + aabb1.length},
-			{aabb1.pos.x + aabb1.width, aabb1.pos.y - aabb1.height, aabb1.pos.z - aabb1.length},
-			{aabb1.pos.x + aabb1.width, aabb1.pos.y + aabb1.height, aabb1.pos.z + aabb1.length},
-			{aabb1.pos.x - aabb1.width, aabb1.pos.y + aabb1.height, aabb1.pos.z + aabb1.length}
-			};
-			// 各面の頂点インデックス（頂点の時計回りまたは反時計回りの順序が重要）
-			int faceIndices[][4] = {
-				{0, 1, 2, 3},  // Bottom
-				{4, 5, 6, 7},  // Top
-				{0, 3, 7, 4},  // Front
-				{1, 2, 6, 5},  // Back
-				{0, 4, 5, 1},  // Left
-				{2, 3, 7, 6}   // Right
-			};
-
-			// 各面の法線ベクトルを計算して表示
-			for (int i = 0; i < 6; ++i) {
-				Vector3 edge1 = subtract(vertices[faceIndices[i][1]], vertices[faceIndices[i][0]]);
-				Vector3 edge2 = subtract(vertices[faceIndices[i][3]], vertices[faceIndices[i][0]]);
-				Vector3 normal = crossProduct(edge1, edge2);
-				normal = normalize(normal);
-				Plane planeTemp;
-				planeTemp.normal = normal;
-				planeTemp.distance = 
-				if (IsCollision(sphere.pos, sphere.radius, planeTemp)) {
-					sphere.velocity = Reflect(sphere.velocity, planeTemp.normal);
-					sphere.velocity.x *= 0.7f;
-					sphere.velocity.y *= 0.7f;
-					sphere.velocity.z *= 0.7f;
-					sphere.color = RED;
-				}
-				else {
-					sphere.color = WHITE;
-				}
-				//std::cout << "Face " << i + 1 << " Normal: (" << normal.x << ", " << normal.y << ", " << normal.z << ")\n";
-			}
-
-
-
-
-			sphere.velocity = Reflect(sphere.velocity, plane.normal);
-			sphere.velocity.x *= 0.7f;
-			sphere.velocity.y *= 0.7f;
-			sphere.velocity.z *= 0.7f;
-			sphere.color = RED;
-			aabb1.color = RED;
-		}
-		else { aabb1.color = WHITE; }
+		
+		
 
 		//if (IsCollision(sphere.pos, sphere.radius, plane2)) {
 		//	sphere.velocity = Reflect(sphere.velocity, plane2.normal);
@@ -936,19 +1149,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1.color);
+		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1.color);
+		DrawOBB(obb, OBBworldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawSphere(sphere, sphere.worldView, viewportMatrix, sphere.color);
-		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, plane.color);
-		DrawPlane(plane2, worldViewProjectionMatrix, viewportMatrix, plane2.color);
+		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, plane.color);
+		//DrawPlane(plane2, worldViewProjectionMatrix, viewportMatrix, plane2.color);
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		/*Novice::DrawTriangle(
 			int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
 			int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid);*/
-		VectorScreenPrintf(0, 0, cross, "Cross");
-
-
-		MatrixScreenPrintf(0, 20, viewportMatrix, "v");
+		//VectorScreenPrintf(0, 0, cross, "Cross");
+		//
+		//
+		//MatrixScreenPrintf(0, 20, viewportMatrix, "v");
 
 
 		///
