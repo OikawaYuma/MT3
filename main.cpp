@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <Vector3.h>
 #include<imGui.h>
+#include "Quaternion.h"
 const char kWindowTitle[] = "LE2B_05_オイカワユウマ";
 
 
@@ -424,6 +425,21 @@ void VectorScreenPrintf(int x, int y, const Vector3& vector, const char* label) 
 
 }
 
+void QuaternionScreenPrintf(int x, int y, const Quaternion& quaternion, const char* label) {
+	Novice::ScreenPrintf(x + kColumnWidth * 4, y, "%s", label);
+	Novice::ScreenPrintf(
+		x, y, "%6.02f", quaternion.x);
+	Novice::ScreenPrintf(
+		x + kColumnWidth * 1, y, "%6.02f", quaternion.y);
+	Novice::ScreenPrintf(
+		x + kColumnWidth * 2, y, "%6.02f", quaternion.z);
+	Novice::ScreenPrintf(
+		x + kColumnWidth * 3, y, "%6.02f", quaternion.w);
+
+
+
+}
+
 
 
 /*----------------------------------
@@ -795,6 +811,41 @@ Matrix4x4 DirectionToDirection(const Vector3& from, const Vector3& to) {
 	return result;
 };
 
+Quaternion IdentityQuaternion() {
+	Quaternion result;
+	return result;
+}
+
+Quaternion Conjugate(Quaternion quaternion) {
+	Quaternion result = quaternion;
+	return result;
+}
+
+Quaternion Inverse(Quaternion quaternion) {
+	Quaternion result = quaternion;
+	return result;
+}
+
+Quaternion Normalize(Quaternion quaternion) {
+	Quaternion result = quaternion;
+	return result;
+}
+
+Quaternion Multiply(Quaternion quaternion1, Quaternion quaternion2) {
+	Quaternion result = quaternion1;
+	Quaternion result1 = quaternion2;
+	return result;
+}
+
+float Norm(Quaternion quaternion) {
+	float result;
+	Quaternion a = quaternion;
+	result = quaternion.z;
+	return result;
+}
+
+
+
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -806,21 +857,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 
-	Vector3 axis = Normalize({ 1.0f,1.0f,1.0f });
-	float angle = 0.44f;
-	Matrix4x4 rotateMatrix = { 0 };
-	rotateMatrix = MakeRotateAxisAngle(axis, angle);
-
-	Vector3 from0 = Normalize(Vector3{ 1.0f,0.7f,0.5f });
-	Vector3 to0 = { -from0.x,-from0.y,-from0.z, };
-	Vector3 from1 = Normalize(Vector3{ -0.6f,0.9f,0.2f });
-	Vector3 to1 = Normalize(Vector3{ 0.4f,0.7f,-0.5f });
-
-	Matrix4x4 rotateMatrix0 = DirectionToDirection(
-		Normalize(Vector3{ 1.0f,0.0f,0.0f }), Normalize(Vector3{ -1.0f,0.0f,0.0f }));
-	Matrix4x4 rotateMatrix1 = DirectionToDirection(from0, to0);
-	Matrix4x4 rotateMatrix2 = DirectionToDirection(from1, to1);
-
+	
 
 
 
@@ -838,8 +875,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓更新処理ここから
 		///
-
-
+		Quaternion q1 = { 2.0f,3.0f,4.0f,1.0f };
+		Quaternion q2 = { 1.0f,3.0f,5.0f,2.0f };
+		Quaternion identity = IdentityQuaternion();
+		Quaternion inv = Inverse(q1);
+		Quaternion normal = Normalize(q1);
+		Quaternion mul1 = Multiply(q1, q2);
+		Quaternion mul2 = Multiply(q2, q1);
+		float norm = Norm(q1);
 
 		///
 		/// ↑更新処理ここまで
@@ -850,11 +893,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 
+		QuaternionScreenPrintf(0, 0, q1, "     : Identity");
 
-		MatrixScreenPrintf(0, 0, rotateMatrix0, "rotateMatrix0");
 
-		MatrixScreenPrintf(0, kRowHeight * 5, rotateMatrix1, "rotateMatrix1");
-		MatrixScreenPrintf(0, kRowHeight * 10, rotateMatrix2, "rotateMatrix2");
+
+		Novice::ScreenPrintf(0, 50, "%f", norm);
+		
 
 
 		///
