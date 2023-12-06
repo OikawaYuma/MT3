@@ -994,42 +994,43 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				//{0, 1, 2, 3},  // Bottom
 				{1, 0, 3, 2},  // Bottom
 				{4, 5, 6, 7},  // Top
-				{2, 3, 6, 7},  // Front
-				{1, 0, 5, 4},  // Back
+				{7, 6, 2, 3},  // Front
+				{0, 1, 5, 4},  // Back
 				{0, 4, 7, 3},  // Left
 				{5, 1, 2, 6}   // Right
 			};
 			 // 各面の法線を計算して表示
-        for (int i = 0; i < 6; ++i) {
-            Vector3 normal = computeNormal(vertices[faceIndices[i][0]], vertices[faceIndices[i][1]], vertices[faceIndices[i][2]]);
-            std::cout << "Face " << i + 1 << " Normal: (" << normal.x << ", " << normal.y << ", " << normal.z << ")\n";
-        }
-			// 各面の法線ベクトルを計算して表示
-			for (int i = 0; i < 6; ++i) {
-								Vector3 edge1 = subtract(vertices[faceIndices[i][1]], vertices[faceIndices[i][0]]);
-								Vector3 edge2 = subtract(vertices[faceIndices[i][3]], vertices[faceIndices[i][0]]);
-								Vector3 normal = crossProduct(edge1, edge2);
-				normal = normalize(normal);
+        //for (int i = 0; i < 6; ++i) {
+        //   // Vector3 normal = computeNormal(vertices[faceIndices[i][0]], vertices[faceIndices[i][1]], vertices[faceIndices[i][2]]);
+        //    //std::cout << "Face " << i + 1 << " Normal: (" << normal.x << ", " << normal.y << ", " << normal.z << ")\n";
+        //}
 
-				// 法線面から指定した点までの距離を計算
-				float distance = adistanceToPlane(normal, vertices[faceIndices[i][0]], OBBtranslate);
+		// 各面の法線ベクトルを計算して表示
+		for (int i = 0; i < 6; ++i) {
+							Vector3 edge1 = Subtract(vertices[faceIndices[i][1]], vertices[faceIndices[i][0]]);
+							Vector3 edge2 = Subtract(vertices[faceIndices[i][3]], vertices[faceIndices[i][0]]);
+							Vector3 normal = Cross(edge1, edge2);
+			normal = normalize(normal);
 
-				Plane planeTemp;
-				planeTemp.normal = normal;
-				tmpNormal = normal;
-				planeTemp.distance = distance;
-				if (IsCollision(sphereOBBLocal.pos, sphereOBBLocal.radius, planeTemp)) {
-					sphere.velocity = Reflect(sphere.velocity, planeTemp.normal);
-					sphere.velocity.x *= 0.7f;
-					sphere.velocity.y *= 0.7f;
-					sphere.velocity.z *= 0.7f;
-					sphere.color = BLUE;
-				}
-				else {
-					//sphere.color = RED;
-				}
-				//std::cout << "Face " << i + 1 << " Normal: (" << normal.x << ", " << normal.y << ", " << normal.z << ")\n";
+			// 法線面から指定した点までの距離を計算
+			float distance = adistanceToPlane(normal, vertices[faceIndices[i][0]], OBBtranslate);
+
+			Plane planeTemp;
+			planeTemp.normal = normal;
+			tmpNormal = normal;
+			planeTemp.distance = distance;
+			if (IsCollision(sphereOBBLocal.pos, sphereOBBLocal.radius, planeTemp)) {
+				sphere.velocity = Reflect(sphere.velocity, planeTemp.normal);
+				sphere.velocity.x *= 0.7f;
+				sphere.velocity.y *= 0.7f;
+				sphere.velocity.z *= 0.7f;
+				sphere.color = BLUE;
 			}
+			else {
+				//sphere.color = RED;
+			}
+			//std::cout << "Face " << i + 1 << " Normal: (" << normal.x << ", " << normal.y << ", " << normal.z << ")\n";
+		}
 
 
 
