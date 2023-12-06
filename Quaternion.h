@@ -1,6 +1,6 @@
 #pragma once
  
-struct Quaternion {
+struct Quaternion final{
 	float x;
 	float y;
 	float z;

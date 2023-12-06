@@ -813,34 +813,60 @@ Matrix4x4 DirectionToDirection(const Vector3& from, const Vector3& to) {
 
 Quaternion IdentityQuaternion() {
 	Quaternion result;
+	result.x = 0.0f;
+	result.y = 0.0f;
+	result.z = 0.0f;
+	result.w = 1.0f;
 	return result;
 }
 
 Quaternion Conjugate(Quaternion quaternion) {
 	Quaternion result = quaternion;
+	result.x *= -1.0f;
+	result.y *= -1.0f;
+	result.z *= -1.0f;
+	result.w *= 1.0f;
 	return result;
 }
 
 Quaternion Inverse(Quaternion quaternion) {
-	Quaternion result = quaternion;
+	Quaternion result2 = quaternion;
+	result2.x *= -1.0f;
+	result2.y *= -1.0f;
+	result2.z *= -1.0f;
+	result2.w *= 1.0f;
+	float result3 = sqrt(quaternion.x * quaternion.x + quaternion.y * quaternion.y + quaternion.z * quaternion.z + quaternion.w * quaternion.w)* sqrt(quaternion.x * quaternion.x + quaternion.y * quaternion.y + quaternion.z * quaternion.z + quaternion.w * quaternion.w);
+	Quaternion result;
+	result.x = result2.x/ result3;
+	result.y = result2.y / result3;
+	result.z = result2.z / result3;
+	result.w = result2.w / result3;
 	return result;
 }
 
 Quaternion Normalize(Quaternion quaternion) {
-	Quaternion result = quaternion;
-	return result;
+
+	Quaternion m3;
+	float mag = 1 / sqrtf(quaternion.x * quaternion.x + quaternion.y * quaternion.y + quaternion.z * quaternion.z + quaternion.w * quaternion.w);
+	m3 = { quaternion.x * mag,quaternion.y * mag,quaternion.z * mag,quaternion.w * mag };
+	return m3;
+
 }
 
 Quaternion Multiply(Quaternion quaternion1, Quaternion quaternion2) {
-	Quaternion result = quaternion1;
-	Quaternion result1 = quaternion2;
+	Quaternion result;
+
+	result.x = quaternion1.y * quaternion2.z - quaternion1.z * quaternion2.y + quaternion2.w * quaternion1.x + quaternion1.w *quaternion2.x;
+	result.y = quaternion1.z * quaternion2.x - quaternion1.x * quaternion2.z + quaternion2.w * quaternion1.y + quaternion1.w * quaternion2.y;
+	result.z = quaternion1.x * quaternion2.y - quaternion1.y * quaternion2.x + quaternion2.w * quaternion1.z + quaternion1.w * quaternion2.z;
+	result.w = quaternion1.w*quaternion2.w-Dot({ quaternion1.x,quaternion1.y ,quaternion1.z }, { quaternion2.x,quaternion2.y ,quaternion2.z });
+
 	return result;
 }
 
 float Norm(Quaternion quaternion) {
-	float result;
-	Quaternion a = quaternion;
-	result = quaternion.z;
+	float result = sqrt(quaternion.x * quaternion.x + quaternion.y * quaternion.y + quaternion.z * quaternion.z + quaternion.w * quaternion.w);
+	
 	return result;
 }
 
@@ -878,6 +904,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Quaternion q1 = { 2.0f,3.0f,4.0f,1.0f };
 		Quaternion q2 = { 1.0f,3.0f,5.0f,2.0f };
 		Quaternion identity = IdentityQuaternion();
+		Quaternion conj = Conjugate(q1);
 		Quaternion inv = Inverse(q1);
 		Quaternion normal = Normalize(q1);
 		Quaternion mul1 = Multiply(q1, q2);
@@ -893,11 +920,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 
-		QuaternionScreenPrintf(0, 0, q1, "     : Identity");
+		QuaternionScreenPrintf(0, 0, identity, "     : Identity");
+		QuaternionScreenPrintf(0, 20, conj, "     : Conjugate");
+		QuaternionScreenPrintf(0, 40, inv, "     : Inverse");
+		QuaternionScreenPrintf(0, 60, normal, "     : Normal");
+		QuaternionScreenPrintf(0, 80, mul1, "     : Multiply(q1,q2)");
+		QuaternionScreenPrintf(0, 100, mul2, "     : Identity(q2,q1)");
 
 
 
-		Novice::ScreenPrintf(0, 50, "%f", norm);
+		Novice::ScreenPrintf(0, 120, "  %6.2f     : Norm", norm);
 		
 
 
