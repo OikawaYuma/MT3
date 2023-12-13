@@ -887,7 +887,7 @@ Vector3 RotateVector(const Vector3& vector, const Quaternion& quaternion) {
 	vectorChenge.x = vector.x;
 	vectorChenge.y = vector.y;
 	vectorChenge.z = vector.z;
-	vectorChenge.w = Length(vector);
+	vectorChenge.w = 0;// Length(vector);
 	Quaternion rotateVector = Multiply(Multiply(quaternion, vectorChenge), Conjugate(quaternion));
 	result.x = rotateVector.x;
 	result.y = rotateVector.y;
@@ -903,12 +903,12 @@ Matrix4x4 MakeRotateMatrix(const Quaternion& quaternion) {
 	result.m[0][2] = 2 * (quaternion.x * quaternion.z - quaternion.w * quaternion.y);
 	result.m[0][3] = 0;
 
-	result.m[1][0] = 2 * (quaternion.x * quaternion.y + quaternion.w * quaternion.z);
+	result.m[1][0] = 2 * (quaternion.x * quaternion.y - quaternion.w * quaternion.z);
 	result.m[1][1] = quaternion.w * quaternion.w - quaternion.x * quaternion.x + quaternion.y * quaternion.y - quaternion.z * quaternion.z;
 	result.m[1][2] = 2 * (quaternion.y * quaternion.z + quaternion.w * quaternion.x);
 	result.m[1][3] = 0;
 
-	result.m[2][0] = 2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.x);
+	result.m[2][0] = 2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y);
 	result.m[2][1] = 2 * (quaternion.y * quaternion.z - quaternion.w * quaternion.x);
 	result.m[2][2] = quaternion.w * quaternion.w - quaternion.x * quaternion.x - quaternion.y * quaternion.y + quaternion.z * quaternion.z;
 	result.m[2][3] = 0;
