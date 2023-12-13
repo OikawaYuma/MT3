@@ -966,7 +966,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 
-		QuaternionScreenPrintf(0,kRowHeight*0,rotation,"   : rotation");
+		QuaternionScreenPrintf(0,kRowHeight*0,rotation," rotation");
 		MatrixScreenPrintf(0, kRowHeight * 1, rotateMatrix, "   : rotateMatrix");
 		VectorScreenPrintf(0, kRowHeight * 6, rotateByQuaternion, "   : rotateByQuaternion");
 		VectorScreenPrintf(0, kRowHeight * 7, rotateByMatrix, "   : rotateByMatrix");
