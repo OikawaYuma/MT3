@@ -870,6 +870,55 @@ float Norm(Quaternion quaternion) {
 	return result;
 }
 
+// 任意軸回転を表すQuaternionの生成
+Quaternion MakeRotateAxisAngleQuaternion(const Vector3& axis,float angle) {
+	Quaternion result;
+	result.w = cos(angle / 2);
+	result.x = axis.x*(sin(angle / 2));
+	result.y = axis.y*sin(angle / 2);
+	result.z = axis.z* sin(angle / 2);
+	return result;
+}
+
+// ベクトルをQuaternionで回転させた結果のベクトルを求める
+Vector3 RotateVector(const Vector3& vector, const Quaternion& quaternion) {
+	Vector3 result;
+	Quaternion vectorChenge;
+	vectorChenge.x = vector.x;
+	vectorChenge.y = vector.y;
+	vectorChenge.z = vector.z;
+	vectorChenge.w = Length(vector);
+	Quaternion rotateVector = Multiply(Multiply(quaternion, vectorChenge), Conjugate(quaternion));
+	result.x = rotateVector.x;
+	result.y = rotateVector.y;
+	result.z = rotateVector.z;
+	return result;
+}
+
+// Quaternionから回転行列を求める
+Matrix4x4 MakeRotateMatrix(const Quaternion& quaternion) {
+	Matrix4x4 result;
+	result.m[0][0] = quaternion.w* quaternion.w + quaternion.x*quaternion.x- quaternion.y*quaternion.y- quaternion.z* quaternion.z;
+	result.m[0][1] = 2 * (quaternion.x * quaternion.y + quaternion.w * quaternion.z);
+	result.m[0][2] = 2 * (quaternion.x * quaternion.z - quaternion.w * quaternion.y);
+	result.m[0][3] = 0;
+
+	result.m[1][0] = 2 * (quaternion.x * quaternion.y + quaternion.w * quaternion.z);
+	result.m[1][1] = quaternion.w * quaternion.w - quaternion.x * quaternion.x + quaternion.y * quaternion.y - quaternion.z * quaternion.z;
+	result.m[1][2] = 2 * (quaternion.y * quaternion.z + quaternion.w * quaternion.x);
+	result.m[1][3] = 0;
+
+	result.m[2][0] = 2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.x);
+	result.m[2][1] = 2 * (quaternion.y * quaternion.z - quaternion.w * quaternion.x);
+	result.m[2][2] = quaternion.w * quaternion.w - quaternion.x * quaternion.x - quaternion.y * quaternion.y + quaternion.z * quaternion.z;
+	result.m[2][3] = 0;
+
+	result.m[3][0] = 0;
+	result.m[3][1] = 0;
+	result.m[3][2] = 0;
+	result.m[3][3] = 1;
+	return result;
+}
 
 
 
@@ -901,15 +950,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓更新処理ここから
 		///
-		Quaternion q1 = { 2.0f,3.0f,4.0f,1.0f };
-		Quaternion q2 = { 1.0f,3.0f,5.0f,2.0f };
-		Quaternion identity = IdentityQuaternion();
-		Quaternion conj = Conjugate(q1);
-		Quaternion inv = Inverse(q1);
-		Quaternion normal = Normalize(q1);
-		Quaternion mul1 = Multiply(q1, q2);
-		Quaternion mul2 = Multiply(q2, q1);
-		float norm = Norm(q1);
+		
+		Quaternion rotation = MakeRotateAxisAngleQuaternion(
+			Normalize(Vector3({ 1.0f,0.4f,-0.2f })), 0.45f);
+		Vector3 pointY = { 2.1f,-0.9f,1.3f };
+		Matrix4x4 rotateMatrix = MakeRotateMatrix(rotation);
+		Vector3 rotateByQuaternion = RotateVector(pointY, rotation);
+		Vector3 rotateByMatrix = Transform(pointY, rotateMatrix);
 
 		///
 		/// ↑更新処理ここまで
@@ -919,18 +966,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 
-
-		QuaternionScreenPrintf(0, 0, identity, "     : Identity");
-		QuaternionScreenPrintf(0, 20, conj, "     : Conjugate");
-		QuaternionScreenPrintf(0, 40, inv, "     : Inverse");
-		QuaternionScreenPrintf(0, 60, normal, "     : Normal");
-		QuaternionScreenPrintf(0, 80, mul1, "     : Multiply(q1,q2)");
-		QuaternionScreenPrintf(0, 100, mul2, "     : Identity(q2,q1)");
-
-
-
-		Novice::ScreenPrintf(0, 120, "  %6.2f     : Norm", norm);
-		
+		QuaternionScreenPrintf(0,kRowHeight*0,rotation,"   : rotation");
+		MatrixScreenPrintf(0, kRowHeight * 1, rotateMatrix, "   : rotateMatrix");
+		VectorScreenPrintf(0, kRowHeight * 6, rotateByQuaternion, "   : rotateByQuaternion");
+		VectorScreenPrintf(0, kRowHeight * 7, rotateByMatrix, "   : rotateByMatrix");
 
 
 		///
