@@ -869,6 +869,14 @@ float Norm(Quaternion quaternion) {
 	
 	return result;
 }
+//内績
+float DotQuaternion(const Quaternion& v1, const Quaternion& v2) {
+	float m3;
+	m3 = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z+v1.w*v2.w;
+
+
+	return m3;
+};
 
 // 任意軸回転を表すQuaternionの生成
 Quaternion MakeRotateAxisAngleQuaternion(const Vector3& axis,float angle) {
@@ -922,6 +930,36 @@ Matrix4x4 MakeRotateMatrix(const Quaternion& quaternion) {
 
 
 
+Quaternion AddQuaternion(const Quaternion& q0, const Quaternion& q1) {
+	Quaternion result;
+	result.x = q0.x + q1.x;
+	result.y = q0.y + q1.y;
+	result.z = q0.z + q1.z;
+	result.w = q0.w + q1.w;
+	return result;
+}
+
+
+Quaternion Slerp(const Quaternion& q0, const Quaternion& q1, float t) {
+	Quaternion result;
+	float dot = DotQuaternion(q0, q1);
+	Quaternion q00 = q0;
+	if (dot < 0) {
+		q00 = { -q0.x,-q0.y ,-q0.z ,-q0.w };
+		dot = -dot;
+	}
+
+	// なす角を求める
+	float thate = std::acos(dot);
+
+	result.x = (sin((1 - t) * thate) / sin(thate)) * q00.x + sin(t * thate) / sin(thate) * q1.x;
+	result.y = (sin((1 - t) * thate) / sin(thate)) * q00.y + sin(t * thate) / sin(thate) * q1.y;
+	result.z = (sin((1 - t) * thate) / sin(thate)) * q00.z + sin(t * thate) / sin(thate) * q1.z;
+	result.w = (sin((1 - t) * thate) / sin(thate)) * q00.w + sin(t * thate) / sin(thate) * q1.w;
+	//result = AddQuaternion(result, q00);
+	return result;
+}
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -951,12 +989,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 		
-		Quaternion rotation = MakeRotateAxisAngleQuaternion(
-			Normalize(Vector3({ 1.0f,0.4f,-0.2f })), 0.45f);
-		Vector3 pointY = { 2.1f,-0.9f,1.3f };
-		Matrix4x4 rotateMatrix = MakeRotateMatrix(rotation);
-		Vector3 rotateByQuaternion = RotateVector(pointY, rotation);
-		Vector3 rotateByMatrix = Transform(pointY, rotateMatrix);
+		Quaternion rotation0 = MakeRotateAxisAngleQuaternion(
+			Normalize(Vector3({ 0.71f,0.71f,0.0f })), 0.3f);
+
+		Quaternion rotation1 = MakeRotateAxisAngleQuaternion(
+			Normalize(Vector3({ 0.71f,0.0f,0.71f })), 3.141592f);
+
+		Quaternion interpolate0 = Slerp(rotation0, rotation1, 0.0f);
+		Quaternion interpolate1 = Slerp(rotation0, rotation1, 0.3f);
+		Quaternion interpolate2 = Slerp(rotation0, rotation1, 0.5f);
+		Quaternion interpolate3 = Slerp(rotation0, rotation1, 0.7f);
+		Quaternion interpolate4 = Slerp(rotation0, rotation1, 1.0f);
 
 		///
 		/// ↑更新処理ここまで
@@ -966,10 +1009,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 
-		QuaternionScreenPrintf(0,kRowHeight*0,rotation," rotation");
-		MatrixScreenPrintf(0, kRowHeight * 1, rotateMatrix, "   : rotateMatrix");
-		VectorScreenPrintf(0, kRowHeight * 6, rotateByQuaternion, "   : rotateByQuaternion");
-		VectorScreenPrintf(0, kRowHeight * 7, rotateByMatrix, "   : rotateByMatrix");
+		QuaternionScreenPrintf(0, kRowHeight * 0, interpolate0, " : interpolate0, Slerp(q0, q1, 0.0f)");
+		QuaternionScreenPrintf(0, kRowHeight * 1, interpolate1, " : interpolate1, Slerp(q0, q1, 0.3f)");
+		QuaternionScreenPrintf(0, kRowHeight * 2, interpolate2, " : interpolate2, Slerp(q0, q1, 0.5f)");
+		QuaternionScreenPrintf(0, kRowHeight * 3, interpolate3, " : interpolate3, Slerp(q0, q1, 0.7f)");
+		QuaternionScreenPrintf(0, kRowHeight * 4, interpolate4, " : interpolate4, Slerp(q0, q1, 1.0f)");
+		
 
 
 		///
